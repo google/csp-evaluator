@@ -1,0 +1,12 @@
+[submodule "third_party/closure-compiler"]
+	path = third_party/closure-compiler
+	url = https://github.com/google/closure-compiler
+[submodule "third_party/closure-library"]
+	path = third_party/closure-library
+	url = https://github.com/google/closure-library
+[submodule "closure-compiler"]
+	path = closure-compiler
+	url = https://github.com/google/closure-compiler
+[submodule "closure-library"]
+	path = closure-library
+	url = https://github.com/google/closure-library
