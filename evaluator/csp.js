@@ -205,13 +205,20 @@ csp.Csp.getEffectiveCsp = function(parsedCsp, cspVersion, opt_findings) {
 
 
 /**
- * Returns the passed directive if present in the CSP, or default-src otherwise.
+ * Returns default-src if directive is a fetch directive and is not present in
+ * the provided CSP. Otherwise the provided directive is returned.
  * @param {!csp.Csp} parsedCsp CSP.
  * @param {string} directive CSP.
  * @return {string} The effective directive.
  */
 csp.Csp.getEffectiveDirective = function(parsedCsp, directive) {
-  return directive in parsedCsp ? directive : csp.Directive.DEFAULT_SRC;
+  // Only fetch directives default to default-src.
+  if (!(directive in parsedCsp) &&
+      goog.array.contains(csp.FETCH_DIRECTIVES, directive)) {
+    return csp.Directive.DEFAULT_SRC;
+  }
+
+  return directive;
 };
 
 
@@ -308,6 +315,7 @@ csp.Directive = {
   BASE_URI: 'base-uri',
   PLUGIN_TYPES: 'plugin-types',
   SANDBOX: 'sandbox',
+  DISOWN_OPENER: 'disown-opener',
 
   // Navigation directives
   FORM_ACTION: 'form-action',
@@ -321,9 +329,31 @@ csp.Directive = {
   BLOCK_ALL_MIXED_CONTENT: 'block-all-mixed-content',
   UPGRADE_INSECURE_REQUESTS: 'upgrade-insecure-requests',
   REFLECTED_XSS: 'reflected-xss',
-  REFERRER: 'referrer'
+  REFERRER: 'referrer',
+  REQUIRE_SRI_FOR: 'require-sri-for'
 };
 
+/**
+ * CSP v3 fetch directives.
+ * Fetch directives control the locations from which resources may be loaded.
+ * https://w3c.github.io/webappsec-csp/#directives-fetch
+ *
+ * @const {!Array.<csp.Directive>}
+ */
+csp.FETCH_DIRECTIVES = [
+  csp.Directive.CHILD_SRC,
+  csp.Directive.CONNECT_SRC,
+  csp.Directive.DEFAULT_SRC,
+  csp.Directive.FONT_SRC,
+  csp.Directive.FRAME_SRC,
+  csp.Directive.IMG_SRC,
+  csp.Directive.MANIFEST_SRC,
+  csp.Directive.MEDIA_SRC,
+  csp.Directive.OBJECT_SRC,
+  csp.Directive.SCRIPT_SRC,
+  csp.Directive.STYLE_SRC,
+  csp.Directive.WORKER_SRC
+];
 
 /**
  * CSP version.

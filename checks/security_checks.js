@@ -37,7 +37,9 @@ goog.require('goog.string');
  * @type {!Array.<string>}
  */
 csp.securityChecks.DIRECTIVES_CAUSING_XSS =
-    [csp.Directive.SCRIPT_SRC, csp.Directive.OBJECT_SRC];
+    [csp.Directive.SCRIPT_SRC,
+     csp.Directive.OBJECT_SRC,
+     csp.Directive.BASE_URI];
 
 
 /**
@@ -185,6 +187,7 @@ csp.securityChecks.checkWildcards = function(parsedCsp) {
  */
 csp.securityChecks.checkMissingDirectives = function(parsedCsp) {
   var violations = [];
+  var directivesCausingXss = csp.securityChecks.DIRECTIVES_CAUSING_XSS;
 
   // If default-src is present, all missing directives will fallback to that.
   if (csp.Directive.DEFAULT_SRC in parsedCsp) {
@@ -197,16 +200,32 @@ csp.securityChecks.checkMissingDirectives = function(parsedCsp) {
           csp.Finding.Severity.HIGH_MAYBE,
           csp.Directive.OBJECT_SRC));
     }
-
-    return violations;
+    if (csp.Directive.BASE_URI in parsedCsp) {
+      return violations;
+    } else {
+      // base-uri is not covered by default-src. It must be explicitly set.
+      directivesCausingXss = [csp.Directive.BASE_URI];
+    }
   }
 
-  for (let directive of csp.securityChecks.DIRECTIVES_CAUSING_XSS) {
+  for (let directive of directivesCausingXss) {
     if (!(directive in parsedCsp)) {
       var description = directive + ' directive is missing.';
       if (directive == csp.Directive.OBJECT_SRC) {
         description = 'Missing object-src allows the injection of plugins ' +
             'which can execute JavaScript. Can you set it to \'none\'?';
+      } else if (directive == csp.Directive.BASE_URI) {
+        if (!csp.Csp.policyHasScriptNonces(parsedCsp) &&
+            !(csp.Csp.policyHasScriptHashes(parsedCsp) &&
+              csp.Csp.policyHasStrictDynamic(parsedCsp))) {
+          // Only nonce based CSPs and hash based (w. s-d) are affected by
+          // missing base-uri.
+          continue;
+        }
+        description = 'Missing base-uri allows the injection of base tags. ' +
+            'They can be used to set the base URL for all relative (script) ' +
+            'URLs to an attacker controlled domain. ' +
+            'Can you set it to \'none\' or \'self\'?';
       }
       violations.push(new csp.Finding(
           csp.Finding.Type.MISSING_DIRECTIVES,
@@ -286,7 +305,7 @@ csp.securityChecks.checkScriptWhitelistBypass = function(parsedCsp) {
       }
       if (angularBypass) {
         bypassDomain = angularBypass.getDomain();
-        bypassTxt += goog.string.isEmpty(bypassTxt) ? '' : ' and';
+        bypassTxt += goog.string.isEmptyOrWhitespace(bypassTxt) ? '' : ' and';
         bypassTxt += ' Angular libraries';
       }
 
@@ -326,17 +345,17 @@ csp.securityChecks.checkFlashObjectWhitelistBypass = function(parsedCsp) {
       csp.Csp.getEffectiveDirective(parsedCsp, csp.Directive.OBJECT_SRC);
   var objectSrcValues = parsedCsp[effectiveObjectSrcDirective] || [];
 
+  // If flash is not allowed in plugin-types, continue.
+  var pluginTypes = parsedCsp[csp.Directive.PLUGIN_TYPES];
+  if (pluginTypes &&
+      !goog.array.contains(pluginTypes, 'application/x-shockwave-flash')) {
+    return [];
+  }
+
   for (let value of objectSrcValues) {
     // Nothing to do here if 'none'.
     if (value == csp.Keyword.NONE) {
-      continue;
-    }
-
-    // If flash is not allowed in plugin-types, continue.
-    var pluginTypes = parsedCsp[csp.Directive.PLUGIN_TYPES];
-    if (pluginTypes &&
-        !goog.array.contains(pluginTypes, 'application/x-shockwave-flash')) {
-      continue;
+      return [];
     }
 
     var url = new goog.Uri('//' + csp.utils.getSchemeFreeUrl(value));

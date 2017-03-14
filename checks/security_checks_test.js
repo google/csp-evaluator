@@ -123,6 +123,15 @@ function testCheckPlainUrlSchemesInObjectSrc() {
     goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
+function testCheckPlainUrlSchemesInBaseUri() {
+  var test = "base-uri data: http: https: sthInvalid:";
+
+  var violations = checkCsp(test, csp.securityChecks.checkPlainUrlSchemes);
+  assertEquals(3, violations.length);
+  assertTrue(
+    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+}
+
 function testCheckPlainUrlSchemesMixed() {
   var test = "default-src https:; object-src data: sthInvalid:";
 
@@ -135,7 +144,8 @@ function testCheckPlainUrlSchemesMixed() {
 }
 
 function testCheckPlainUrlSchemesDangerousDirectivesOK() {
-  var test = "default-src https:; object-src 'none'; script-src 'none'";
+  var test = "default-src https:; object-src 'none'; script-src 'none'; " +
+      "base-uri 'none'";
 
   var violations = checkCsp(test, csp.securityChecks.checkPlainUrlSchemes);
   assertEquals(0, violations.length);
@@ -153,8 +163,17 @@ function testCheckWildcardsInScriptSrc() {
     goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
-function testCheckWildcardsInScriptSrc() {
+function testCheckWildcardsInObjectSrc() {
   var test = "object-src * http://* //*";
+
+  var violations = checkCsp(test, csp.securityChecks.checkWildcards);
+  assertEquals(3, violations.length);
+  assertTrue(
+    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+}
+
+function testCheckWildcardsInBaseUri() {
+  var test = "base-uri * http://* //*";
 
   var violations = checkCsp(test, csp.securityChecks.checkWildcards);
   assertEquals(3, violations.length);
@@ -174,7 +193,8 @@ function testCheckWildcardsSchemesMixed() {
 }
 
 function testCheckWildcardsDangerousDirectivesOK() {
-  var test = "default-src *; object-src *.foo.bar; script-src 'none'";
+  var test = "default-src *; object-src *.foo.bar; script-src 'none'; " +
+      "base-uri 'none'";
 
   var violations = checkCsp(test, csp.securityChecks.checkWildcards);
   assertEquals(0, violations.length);
@@ -197,6 +217,29 @@ function testCheckMissingDirectivesMissingScriptSrc() {
   var violations = checkCsp(test, csp.securityChecks.checkMissingDirectives);
   assertEquals(1, violations.length);
   assertEquals(csp.Finding.Severity.HIGH, violations[0].severity);
+}
+
+function testCheckMissingDirectivesMissingBaseUriInNonceCsp() {
+  var test = "script-src 'nonce-123'; object-src 'none'";
+
+  var violations = checkCsp(test, csp.securityChecks.checkMissingDirectives);
+  assertEquals(1, violations.length);
+  assertEquals(csp.Finding.Severity.HIGH, violations[0].severity);
+}
+
+function testCheckMissingDirectivesMissingBaseUriInHashWStrictDynamicCsp() {
+  var test = "script-src 'sha256-123456' 'strict-dynamic'; object-src 'none'";
+
+  var violations = checkCsp(test, csp.securityChecks.checkMissingDirectives);
+  assertEquals(1, violations.length);
+  assertEquals(csp.Finding.Severity.HIGH, violations[0].severity);
+}
+
+function testCheckMissingDirectivesMissingBaseUriInHashCsp() {
+  var test = "script-src 'sha256-123456'; object-src 'none'";
+
+  var violations = checkCsp(test, csp.securityChecks.checkMissingDirectives);
+  assertEquals(0, violations.length);
 }
 
 function testCheckMissingDirectivesScriptAndObjectSrcSet() {
