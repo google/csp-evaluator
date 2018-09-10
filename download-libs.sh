@@ -83,6 +83,7 @@ fi
 # checkout closure templates compiler
 if [ ! -d closure-templates-compiler ]; then
   curl https://dl.google.com/closure-templates/closure-templates-for-javascript-latest.zip -O
+  mkdir closure-templates-compiler
   unzip closure-templates-for-javascript-latest.zip -d closure-templates-compiler
   rm closure-templates-for-javascript-latest.zip
 fi
