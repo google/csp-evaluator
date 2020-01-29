@@ -77,8 +77,7 @@ csp.CspEvaluator.DEFAULT_CHECKS = [
     csp.securityChecks.checkIpSource,
     csp.securityChecks.checkNonceLength,
     csp.securityChecks.checkSrcHttp,
-// TODO(user): re-enable this check when report-to becomes relevant.
-//  csp.securityChecks.checkDeprecatedDirective,
+    csp.securityChecks.checkDeprecatedDirective,
     csp.parserChecks.checkUnknownDirective,
     csp.parserChecks.checkMissingSemicolon,
     csp.parserChecks.checkInvalidKeyword
@@ -93,7 +92,8 @@ csp.CspEvaluator.STRICTCSP_CHECKS = [
     csp.strictcspChecks.checkStrictDynamic,
     csp.strictcspChecks.checkStrictDynamicNotStandalone,
     csp.strictcspChecks.checkUnsafeInlineFallback,
-    csp.strictcspChecks.checkWhitelistFallback
+    csp.strictcspChecks.checkWhitelistFallback,
+    csp.strictcspChecks.checkRequiresTrustedTypesForScripts
 ];
 
 

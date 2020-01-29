@@ -22,6 +22,9 @@ goog.setTestOnly();
 
 goog.require('csp.Csp');
 goog.require('csp.CspParser');
+goog.require('csp.Directive');
+goog.require('csp.Finding');
+goog.require('csp.Version');
 goog.require('csp.securityChecks');
 goog.require('csp.whitelistBypasses.angular');
 goog.require('csp.whitelistBypasses.flash');
@@ -106,39 +109,39 @@ function testCheckScriptUnsafeEvalInDefaultSrc() {
 /** Tests for csp.securityChecks.checkPlainUrlSchemes */
 
 function testCheckPlainUrlSchemesInScriptSrc() {
-  var test = "script-src data: http: https: sthInvalid:";
+  var test = 'script-src data: http: https: sthInvalid:';
 
   var violations = checkCsp(test, csp.securityChecks.checkPlainUrlSchemes);
   assertEquals(3, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
 function testCheckPlainUrlSchemesInObjectSrc() {
-  var test = "object-src data: http: https: sthInvalid:";
+  var test = 'object-src data: http: https: sthInvalid:';
 
   var violations = checkCsp(test, csp.securityChecks.checkPlainUrlSchemes);
   assertEquals(3, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
 function testCheckPlainUrlSchemesInBaseUri() {
-  var test = "base-uri data: http: https: sthInvalid:";
+  var test = 'base-uri data: http: https: sthInvalid:';
 
   var violations = checkCsp(test, csp.securityChecks.checkPlainUrlSchemes);
   assertEquals(3, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
 function testCheckPlainUrlSchemesMixed() {
-  var test = "default-src https:; object-src data: sthInvalid:";
+  var test = 'default-src https:; object-src data: sthInvalid:';
 
   var violations = checkCsp(test, csp.securityChecks.checkPlainUrlSchemes);
   assertEquals(2, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
   assertEquals(csp.Directive.DEFAULT_SRC, violations[0].directive);
   assertEquals(csp.Directive.OBJECT_SRC, violations[1].directive);
 }
@@ -155,39 +158,39 @@ function testCheckPlainUrlSchemesDangerousDirectivesOK() {
 /** Tests for csp.securityChecks.checkWildcards */
 
 function testCheckWildcardsInScriptSrc() {
-  var test = "script-src * http://* //*";
+  var test = 'script-src * http://* //*';
 
   var violations = checkCsp(test, csp.securityChecks.checkWildcards);
   assertEquals(3, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
 function testCheckWildcardsInObjectSrc() {
-  var test = "object-src * http://* //*";
+  var test = 'object-src * http://* //*';
 
   var violations = checkCsp(test, csp.securityChecks.checkWildcards);
   assertEquals(3, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
 function testCheckWildcardsInBaseUri() {
-  var test = "base-uri * http://* //*";
+  var test = 'base-uri * http://* //*';
 
   var violations = checkCsp(test, csp.securityChecks.checkWildcards);
   assertEquals(3, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
 }
 
 function testCheckWildcardsSchemesMixed() {
-  var test = "default-src *; object-src * ignore.me.com";
+  var test = 'default-src *; object-src * ignore.me.com';
 
   var violations = checkCsp(test, csp.securityChecks.checkWildcards);
   assertEquals(2, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.HIGH));
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.HIGH));
   assertEquals(csp.Directive.DEFAULT_SRC, violations[0].directive);
   assertEquals(csp.Directive.OBJECT_SRC, violations[1].directive);
 }
@@ -250,7 +253,7 @@ function testCheckMissingDirectivesScriptAndObjectSrcSet() {
 }
 
 function testCheckMissingDirectivesDefaultSrcSet() {
-  var test = "default-src https:;";
+  var test = 'default-src https:;';
 
   var violations = checkCsp(test, csp.securityChecks.checkMissingDirectives);
   assertEquals(1, violations.length);
@@ -273,11 +276,13 @@ csp.whitelistBypasses.jsonp.URLS = goog.array.map([
 ], url => new goog.Uri(url));
 
 
+/** Fake domains, which JSONP enpoints need unsafe-eval. */
 csp.whitelistBypasses.jsonp.NEEDS_EVAL = [
   'googletagmanager.com'
 ];
 
 
+/** Fake URLs, which Angular enpoints can bypass CSP. */
 csp.whitelistBypasses.angular.URLS = goog.array.map([
   '//gstatic.com/fsn/angular_js-bundle1.js'
 ], url => new goog.Uri(url));
@@ -293,6 +298,14 @@ function testCheckScriptWhitelistBypassJSONPBypass() {
   assertTrue(goog.string.contains(
       violations[0].description,
       'www.google.com is known to host JSONP endpoints which'));
+}
+
+function testCheckScriptWhitelistBypassWithNoneAndJSONPBypass() {
+  var test = 'script-src *.google.com \'none\'';
+
+  var violations = checkCsp(
+      test, csp.securityChecks.checkScriptWhitelistBypass);
+  assertEquals(0, violations.length);
 }
 
 function testCheckScriptWhitelistBypassJSONPBypassEvalRequired() {
@@ -392,14 +405,38 @@ function testCheckIpSource() {
 
   var violations = checkCsp(test, csp.securityChecks.checkIpSource);
   assertEquals(3, violations.length);
-  assertTrue(
-    goog.array.every(violations, v => v.severity == csp.Finding.Severity.INFO));
-  }
+  assertTrue(goog.array.every(
+      violations, v => v.severity == csp.Finding.Severity.INFO));
+}
 
 
-/** Tests for csp.securityChecks.checkIpSource */
-function testCheckDeprecatedDirective() {
-  var test = 'report-uri foo.bar/csp';
+function testCheckDeprecatedDirectiveReportUriWithReportTo() {
+  var test = 'report-uri foo.bar/csp;report-to abc';
+
+  var violations = checkCsp(test, csp.securityChecks.checkDeprecatedDirective);
+  assertEquals(0, violations.length);
+}
+
+
+function testCheckDeprecatedDirectiveWithoutReportUriButWithReportTo() {
+  var test = 'report-to abc';
+
+  var violations = checkCsp(test, csp.securityChecks.checkDeprecatedDirective);
+  assertEquals(0, violations.length);
+}
+
+
+function testCheckDeprecatedDirectiveReflectedXss() {
+  var test = 'reflected-xss block';
+
+  var violations = checkCsp(test, csp.securityChecks.checkDeprecatedDirective);
+  assertEquals(1, violations.length);
+  assertEquals(csp.Finding.Severity.INFO, violations[0].severity);
+}
+
+
+function testCheckDeprecatedDirectiveReferrer() {
+  var test = 'referrer origin';
 
   var violations = checkCsp(test, csp.securityChecks.checkDeprecatedDirective);
   assertEquals(1, violations.length);

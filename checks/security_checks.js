@@ -189,10 +189,13 @@ csp.securityChecks.checkMissingDirectives = function(parsedCsp) {
   var violations = [];
   var directivesCausingXss = csp.securityChecks.DIRECTIVES_CAUSING_XSS;
 
+  // Cannot use `in` with structs... bypass this check.
+  var /** ? */ any = parsedCsp;
+
   // If default-src is present, all missing directives will fallback to that.
-  if (csp.Directive.DEFAULT_SRC in parsedCsp) {
+  if (csp.Directive.DEFAULT_SRC in any) {
     var defaultSrcValues = parsedCsp[csp.Directive.DEFAULT_SRC];
-    if (!(csp.Directive.OBJECT_SRC in parsedCsp) &&
+    if (!(csp.Directive.OBJECT_SRC in any) &&
         !(goog.array.contains(defaultSrcValues, csp.Keyword.NONE))) {
       violations.push(new csp.Finding(
           csp.Finding.Type.MISSING_DIRECTIVES,
@@ -200,7 +203,7 @@ csp.securityChecks.checkMissingDirectives = function(parsedCsp) {
           csp.Finding.Severity.HIGH_MAYBE,
           csp.Directive.OBJECT_SRC));
     }
-    if (csp.Directive.BASE_URI in parsedCsp) {
+    if (csp.Directive.BASE_URI in any) {
       return violations;
     } else {
       // base-uri is not covered by default-src. It must be explicitly set.
@@ -209,7 +212,7 @@ csp.securityChecks.checkMissingDirectives = function(parsedCsp) {
   }
 
   for (let directive of directivesCausingXss) {
-    if (!(directive in parsedCsp)) {
+    if (!(directive in any)) {
       var description = directive + ' directive is missing.';
       if (directive == csp.Directive.OBJECT_SRC) {
         description = 'Missing object-src allows the injection of plugins ' +
@@ -254,6 +257,9 @@ csp.securityChecks.checkScriptWhitelistBypass = function(parsedCsp) {
   var effectiveScriptSrcDirective =
       csp.Csp.getEffectiveDirective(parsedCsp, csp.Directive.SCRIPT_SRC);
   var scriptSrcValues = parsedCsp[effectiveScriptSrcDirective] || [];
+  if (goog.array.contains(scriptSrcValues, csp.Keyword.NONE)) {
+    return violations;
+  }
 
   for (let value of scriptSrcValues) {
     if (value == csp.Keyword.SELF) {
@@ -286,7 +292,6 @@ csp.securityChecks.checkScriptWhitelistBypass = function(parsedCsp) {
 
     // Some JSONP bypasses only work in presence of unsafe-eval.
     if (jsonpBypass) {
-      var bypassUrl = '//' + jsonpBypass.getDomain() + jsonpBypass.getPath();
       var evalRequired = goog.array.contains(
           csp.whitelistBypasses.jsonp.NEEDS_EVAL, jsonpBypass.getDomain());
       var evalPresent =
@@ -441,15 +446,35 @@ csp.securityChecks.checkIpSource = function(parsedCsp) {
 csp.securityChecks.checkDeprecatedDirective = function(parsedCsp) {
   var violations = [];
 
-  // Function for checking if directive values contain IP addresses.
-  if (csp.Directive.REPORT_URI in parsedCsp) {
+  // Cannot use `in` with structs... bypass this check.
+  var /** ? */ any = parsedCsp;
+
+  // More details: https://www.chromestatus.com/feature/5769374145183744
+  if (csp.Directive.REFLECTED_XSS in any) {
     violations.push(new csp.Finding(
         csp.Finding.Type.DEPRECATED_DIRECTIVE,
-        'report-uri is deprecated in CSP3. ' +
-        'Please use the report-to directive instead.',
-        csp.Finding.Severity.INFO, csp.Directive.REPORT_URI));
+        'reflected-xss is deprecated since CSP2. ' +
+        'Please, use the X-XSS-Protection header instead.',
+        csp.Finding.Severity.INFO, csp.Directive.REFLECTED_XSS));
   }
 
+  // More details: https://www.chromestatus.com/feature/5680800376815616
+  if (csp.Directive.REFERRER in any) {
+    violations.push(new csp.Finding(
+        csp.Finding.Type.DEPRECATED_DIRECTIVE,
+        'referrer is deprecated since CSP2. ' +
+        'Please, use the Referrer-Policy header instead.',
+        csp.Finding.Severity.INFO, csp.Directive.REFERRER));
+  }
+
+  // More details: https://github.com/w3c/webappsec-csp/pull/327
+  if (csp.Directive.DISOWN_OPENER in any) {
+    violations.push(new csp.Finding(
+        csp.Finding.Type.DEPRECATED_DIRECTIVE,
+        'disown-opener is deprecated since CSP3. ' +
+        'Please, use the Cross Origin Opener Policy header instead.',
+        csp.Finding.Severity.INFO, csp.Directive.DISOWN_OPENER));
+  }
   return violations;
 };
 
@@ -479,16 +504,16 @@ csp.securityChecks.checkNonceLength = function(parsedCsp) {
           var nonceValue = match[1];
           if (nonceValue.length < 8) {
             violations.push(new csp.Finding(
-              csp.Finding.Type.NONCE_LENGTH,
-              'Nonces should be at least 8 characters long.',
-              csp.Finding.Severity.MEDIUM, directive, value));
+                csp.Finding.Type.NONCE_LENGTH,
+                'Nonces should be at least 8 characters long.',
+                csp.Finding.Severity.MEDIUM, directive, value));
           }
 
           if (!csp.isNonce(value, true)) {
             violations.push(new csp.Finding(
-              csp.Finding.Type.NONCE_LENGTH,
-              'Nonces should only use the base64 charset.',
-              csp.Finding.Severity.INFO, directive, value));
+                csp.Finding.Type.NONCE_LENGTH,
+                'Nonces should only use the base64 charset.',
+                csp.Finding.Severity.INFO, directive, value));
           }
         }
       });
@@ -508,19 +533,19 @@ csp.securityChecks.checkNonceLength = function(parsedCsp) {
  * @return {!Array.<!csp.Finding>}
  */
 csp.securityChecks.checkSrcHttp = function(parsedCsp) {
- var violations = [];
+  var violations = [];
 
   csp.utils.applyCheckFunktionToDirectives(
       parsedCsp, function(directive, directiveValues) {
         for (let value of directiveValues) {
           var description = directive == csp.Directive.REPORT_URI ?
-                'Use HTTPS to send violation reports securely.' :
-                'Allow only resources downloaded over HTTPS.';
+              'Use HTTPS to send violation reports securely.' :
+              'Allow only resources downloaded over HTTPS.';
           if (value.startsWith('http://')) {
             violations.push(new csp.Finding(
-              csp.Finding.Type.SRC_HTTP,
-              description,
-              csp.Finding.Severity.MEDIUM, directive, value));
+                csp.Finding.Type.SRC_HTTP,
+                description,
+                csp.Finding.Severity.MEDIUM, directive, value));
           }
         }
       });

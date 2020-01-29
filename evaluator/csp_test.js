@@ -53,9 +53,9 @@ function testGetEffectiveCspVersion1() {
   assertElementsEquals(
     ["'unsafe-inline'", "'self'"],
     effectiveCsp[csp.Directive.DEFAULT_SRC]);
-  assertFalse(csp.Directive.REPORT_TO in effectiveCsp);
-  assertFalse(csp.Directive.WORKER_SRC in effectiveCsp);
-  assertFalse(csp.Directive.MANIFEST_SRC in effectiveCsp);
+  assertFalse(effectiveCsp.hasOwnProperty(csp.Directive.REPORT_TO));
+  assertFalse(effectiveCsp.hasOwnProperty(csp.Directive.WORKER_SRC));
+  assertFalse(effectiveCsp.hasOwnProperty(csp.Directive.MANIFEST_SRC));
 }
 
 
@@ -69,9 +69,9 @@ function testGetEffectiveCspVersion2() {
   assertElementsEquals(
     ["'nonce-123'", "'sha256-foobar'", "'self'"],
     effectiveCsp[csp.Directive.DEFAULT_SRC]);
-  assertFalse(csp.Directive.REPORT_TO in effectiveCsp);
-  assertFalse(csp.Directive.WORKER_SRC in effectiveCsp);
-  assertFalse(csp.Directive.MANIFEST_SRC in effectiveCsp);
+  assertFalse(effectiveCsp.hasOwnProperty(csp.Directive.REPORT_TO));
+  assertFalse(effectiveCsp.hasOwnProperty(csp.Directive.WORKER_SRC));
+  assertFalse(effectiveCsp.hasOwnProperty(csp.Directive.MANIFEST_SRC));
 }
 
 
@@ -211,9 +211,9 @@ function testIsNonce() {
 function testIsStrictNonce() {
   assertTrue(csp.isNonce("'nonce-asdfASDF='", true));
   assertTrue(csp.isNonce("'nonce-as+df/A0234SDF=='", true));
+  assertTrue(csp.isNonce("'nonce-as_dfASDF='", true));
   assertFalse(csp.isNonce("'nonce-asdfASDF==='", true));
   assertFalse(csp.isNonce("'sha256-asdfASDF='", true));
-  assertFalse(csp.isNonce("'nonce-as_dfASDF='", true));
 }
 
 

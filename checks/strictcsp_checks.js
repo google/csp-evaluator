@@ -161,3 +161,30 @@ csp.strictcspChecks.checkWhitelistFallback = function(parsedCsp) {
   return [];
 };
 
+
+/**
+ * Checks if the policy requires Trusted Types for scripts.
+ *
+ * I.e. the policy should have the following dirctive:
+ *  require-trusted-types-for 'script'
+ *
+ * @param {!csp.Csp} parsedCsp A parsed csp.
+ * @return {!Array<!csp.Finding>}
+ */
+csp.strictcspChecks.checkRequiresTrustedTypesForScripts = function(parsedCsp) {
+  var directiveName = csp.Csp.getEffectiveDirective(
+      parsedCsp, csp.Directive.REQUIRE_TRUSTED_TYPES_FOR);
+  var values = parsedCsp[directiveName] || [];
+
+  if (!goog.array.contains(values, csp.TrustedTypesSink.SCRIPT)) {
+    return [new csp.Finding(
+        csp.Finding.Type.REQUIRE_TRUSTED_TYPES_FOR_SCRIPTS,
+        'Consider requiring Trusted Types for scripts to lock down DOM XSS ' +
+            'injection sinks. You can do this by adding ' +
+            '"require-trusted-types-for \'script\'" to your policy.',
+        csp.Finding.Severity.INFO,
+        csp.Directive.REQUIRE_TRUSTED_TYPES_FOR)];
+  }
+
+  return [];
+};

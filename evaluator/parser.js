@@ -68,10 +68,13 @@ csp.CspParser.prototype.parse = function(unparsedCsp) {
     if (goog.isArray(directiveParts)) {
       var directiveName = directiveParts[0].toLowerCase();
 
+      // Cannot use `in` with structs... bypass this check.
+      var /** ? */ any = this.csp;
+
       // If the set of directives already contains a directive whose name is a
       // case insensitive match for directive name, ignore this instance of the
       // directive and continue to the next token.
-      if (directiveName in this.csp) {
+      if (directiveName in any) {
         // TODO(user): propagate this information to the UI.
         goog.log.warning(
             this.logger_, 'Duplicate directive detected: ' + directiveName);

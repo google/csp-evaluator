@@ -126,9 +126,22 @@ csp.parserChecks.checkInvalidKeyword = function(parsedCsp) {
         continue;
       }
 
-      // Continue, if it's a valid keyword.
-      if (csp.isKeyword(value) || csp.isHash(value) || csp.isNonce(value)) {
-        continue;
+      if (directive == csp.Directive.REQUIRE_TRUSTED_TYPES_FOR) {
+        // Continue, if it's an allowed Trusted Types sink.
+        if (value == csp.TrustedTypesSink.SCRIPT) {
+          continue;
+        }
+      } else if (directive == csp.Directive.TRUSTED_TYPES) {
+        // Continue, if it's an allowed Trusted Types keyword.
+        if (directive == csp.Directive.TRUSTED_TYPES &&
+            value == '\'allow-duplicates\'') {
+          continue;
+        }
+      } else {
+        // Continue, if it's a valid keyword.
+        if (csp.isKeyword(value) || csp.isHash(value) || csp.isNonce(value)) {
+          continue;
+        }
       }
 
       findings.push(new csp.Finding(
