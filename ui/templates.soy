@@ -17,14 +17,14 @@
  * @author lwe@google.com (Lukas Weichselbaum)
  */
 
-{namespace csp.ui.templates autoescape="strict"}
+{namespace csp.ui.templates}
 
 /**
  * Renders a CSP Widget.
- * @param uiModel {!Array.<!csp.ui.Directive>} Parsed CSP.
- * @param cspVersion {!csp.Version} Parsed CSP.
  */
 {template .CspWidget}
+  {@param uiModel: ?}  /** {!Array.<!csp.ui.Directive>} Parsed CSP. */
+  {@param cspVersion: ?}  /** {!csp.Version} Parsed CSP. */
   <div>
     <span class="left">
       <h4 class="title">Evaluated CSP as seen by a browser supporting CSP Version {$cspVersion}</h4>
@@ -33,7 +33,7 @@
     <div class="clear"></div>
 
     <div class="evaluated-csp">
-      {foreach $directive in $uiModel}
+      {for $directive in $uiModel}
         <div class="directive">
           <a class="cols">
             <div class="col icon" data-tooltip="{$directive.coloredIcon.altText}" style="width: 25px;">
@@ -49,9 +49,9 @@
             <div class="col" style="width: 0%;"></div>
             <div class="col" style="width: 60%;">
               <ul class="descriptions">
-              {foreach $finding in $directive.directiveLevelFindings}
+              {for $finding in $directive.directiveLevelFindings}
                 {if $finding.description}<li>{$finding.description}</li>{/if}
-              {/foreach}
+              {/for}
               </ul>
             </div>
             <div class="col" style="float: right;">
@@ -60,7 +60,7 @@
           </a>
           <div class="border"></div>
           <div class="directive-values">
-            {foreach $directiveValue in $directive.values}
+            {for $directiveValue in $directive.values}
               <div class="cols directive-value">
                 <div class="col" style="width: 25px;"></div>
                 <div class="col icon" data-tooltip="{$directiveValue.coloredIcon.altText}"
@@ -75,17 +75,17 @@
                 </div>
                 <div class="col" style="width: 55%;">
                 <ul class="descriptions">
-                {foreach $finding in $directiveValue.findings}
+                {for $finding in $directiveValue.findings}
                   {if $finding.description}<li>{$finding.description}</li>{/if}
-                {/foreach}
+                {/for}
                 </ul>
                 </div>
               </div>
-            {/foreach}
+            {/for}
             <br>
           </div>
         </div>
-      {/foreach}
+      {/for}
     </div>
     <br>
   </div>
@@ -94,20 +94,20 @@
 
 /**
  * Renders a legend for the CSP Widget that explains icons and colors.
- * @param items {!Array.<!csp.ui.ColoredIcon>} Parsed CSP.
  */
 {template .CspWidgetLegend}
+  {@param items: ?}  /** {!Array.<!csp.ui.ColoredIcon>} Parsed CSP. */
 <div style="width: 300px">
   <a><h4 class="title border">Legend</h4></a>
   <div class="legend">
-  {foreach $item in $items}
+  {for $item in $items}
     <div class="cols">
       <div class="col icon" style="width: 20px">
         <i class="material-icons {$item.color}">{$item.icon}</i>
       </div>
       <div class="col">{$item.altText}</div>
     </div>
-  {/foreach}
+  {/for}
   </div>
 </div>
 {/template}

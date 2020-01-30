@@ -176,5 +176,6 @@ csp.whitelistBypasses.jsonp.URLS = goog.array.map([
   '//a.tiles.mapbox.com/v3/zentralmedia.map-n2raeauc.jsonp',
   '//maps.google.ru/maps/vt',
   '//c1n2.hypercomments.com/stream/subscribe',
-  '//rec.ydf.yandex.ru/cookie'
+  '//rec.ydf.yandex.ru/cookie',
+  '//cdn.jsdelivr.net'
 ], url => new goog.Uri(url));

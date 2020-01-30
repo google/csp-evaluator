@@ -22,6 +22,7 @@ goog.setTestOnly();
 
 goog.require('csp.Csp');
 goog.require('csp.CspParser');
+goog.require('csp.Finding');
 goog.require('csp.parserChecks');
 
 goog.require('goog.array');
@@ -83,8 +84,22 @@ function testCheckInvalidKeywordForgottenSingleTicks() {
 function testCheckInvalidKeywordUnknownKeyword() {
   var test = "script-src \'foo-bar\'";
 
-  var violations = checkCsp(test, csp.parserChecks.checkMissingSemicolon);
+  var violations = checkCsp(test, csp.parserChecks.checkInvalidKeyword);
   assertEquals(1, violations.length);
   assertEquals(csp.Finding.Severity.SYNTAX, violations[0].severity);
   assertEquals("\'foo-bar\'", violations[0].value);
+}
+
+function testCheckInvalidKeywordAllowsRequireTrustedTypesForScript() {
+  var test = "require-trusted-types-for 'script'";
+
+  var violations = checkCsp(test, csp.parserChecks.checkInvalidKeyword);
+  assertEquals(0, violations.length);
+}
+
+function testCheckInvalidKeywordAllowsTrustedTypesAllowDuplicateKeyword() {
+  var test = "trusted-types 'allow-duplicates' policy1";
+
+  var violations = checkCsp(test, csp.parserChecks.checkInvalidKeyword);
+  assertEquals(0, violations.length);
 }

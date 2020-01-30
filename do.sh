@@ -66,7 +66,7 @@ evaluator_build_templates() {
   rm -f "$BUILD_TPL_DIR/cksum"
   evaluator_get_file_cksum '*.soy' > "$BUILD_TPL_DIR/cksum"
   find "ui" -name '*.soy' -exec java -jar third_party/closure-templates-compiler/SoyToJsSrcCompiler.jar \
-  --shouldProvideRequireSoyNamespaces --shouldGenerateJsdoc --shouldDeclareTopLevelNamespaces --srcs {} \
+  --shouldProvideRequireSoyNamespaces --shouldDeclareTopLevelNamespaces --srcs {} \
   --outputPathFormat "$BUILD_TPL_DIR/{INPUT_DIRECTORY}{INPUT_FILE_NAME}.js" \;
   echo "Done."
 }

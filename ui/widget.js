@@ -351,7 +351,7 @@ csp.ui.Widget.prototype.buildModel_ = function() {
     // Generate findings for directives.
     var uiDirectiveFindings = [];
     var directiveFindings =
-        goog.array.filter(findings, f => !goog.isDef(f.value));
+        goog.array.filter(findings, f => f.value === undefined);
     for (let finding of directiveFindings) {
       var coloredIcon = this.translateSeverity_(finding.severity);
       var uiFinding =
@@ -362,7 +362,7 @@ csp.ui.Widget.prototype.buildModel_ = function() {
     // Generate UI elements for directives
     var coloredIcon =
         this.translateSeverity_(csp.Finding.getHighestSeverity(findings));
-    var isMissing = !(directive in this.csp);
+    var isMissing = !(directive in /** @type {?} */ (this.csp));
     var uiDirective = new csp.ui.Directive(
         directive, uiDirectiveValues, coloredIcon, uiDirectiveFindings,
         isMissing);
@@ -386,7 +386,7 @@ csp.ui.Widget.prototype.markIgnoredDirectivesAndValues_ = function(uiModel) {
           'Directive/Value is ignored in this version of CSP');
   for (let uiDirective of uiModel) {
     if (!uiDirective.isMissing &&
-        !(uiDirective.directive in this.effectiveCsp)) {
+        !(uiDirective.directive in /** @type {?} */ (this.effectiveCsp))) {
       uiDirective.isIgnored = true;
       uiDirective.coloredIcon = ignoreIcon;
     }
