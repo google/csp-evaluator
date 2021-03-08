@@ -1,4 +1,7 @@
 /**
+ * @fileoverview Collection of popular sites/CDNs hosting Angular.
+ * @author lwe@google.com (Lukas Weichselbaum)
+ *
  * @license
  * Copyright 2016 Google Inc. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,25 +15,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * @fileoverview Collection of popular sites/CDNs hosting Angular.
- * @author lwe@google.com (Lukas Weichselbaum)
  */
-
-goog.provide('csp.whitelistBypasses.angular');
-
-goog.require('goog.Uri');
-goog.require('goog.array');
 
 
 /**
- * Angular libraries on commonly whitelisted origins (e.g. CDNs) that would
+ * Angular libraries on commonly allowlisted origins (e.g. CDNs) that would
  * allow a CSP bypass.
  * Only most common paths are listed here. Hence there might still be other
  * paths on these domains that would allow a bypass.
- * @type {!Array.<!goog.Uri>}
  */
-csp.whitelistBypasses.angular.URLS = goog.array.map([
+export const URLS: string[] = [
   '//gstatic.com/fsn/angular_js-bundle1.js',
   '//www.gstatic.com/fsn/angular_js-bundle1.js',
   '//www.googleadservices.com/pageadimg/imgad',
@@ -72,4 +66,4 @@ csp.whitelistBypasses.angular.URLS = goog.array.map([
   '//www.adobe.com/devnet-apps/flashshowcase/lib/angular/angular.1.1.5.min.js',
   '//eternal-sunset.herokuapp.com/bower_components/angular/angular.js',
   '//cdn.bootcss.com/angular.js/1.2.0/angular.min.js'
-], url => new goog.Uri(url));
+];
