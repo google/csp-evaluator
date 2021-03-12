@@ -1,4 +1,13 @@
 /**
+ * @fileoverview Collection of popular sites/CDNs hosting JSONP-like endpoints.
+ * Endpoints don't contain necessary parameters to trigger JSONP response
+ * because parameters are ignored in CSP allowlists.
+ * Usually per domain only one (popular) file path is listed to allow bypasses
+ * of the most common path based allowlists. It's not practical to ship a list
+ * for all possible paths/domains. Therefore the jsonp bypass check usually only
+ * works efficient for domain based allowlists.
+ * @author lwe@google.com (Lukas Weichselbaum)
+ *
  * @license
  * Copyright 2016 Google Inc. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,47 +21,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * @fileoverview Collection of popular sites/CDNs hosting JSONP-like endpoints.
- * Endpoints don't contain necessary parameters to trigger JSONP response
- * because parameters are ignored in CSP whitelists.
- * Usually per domain only one (popular) file path is listed to allow bypasses
- * of the most common path based whitelists. It's not practical to ship a list
- * for all possible paths/domains. Therefore the jsonp bypass check usually only
- * works efficient for domain based whitelists.
- * @author lwe@google.com (Lukas Weichselbaum)
  */
-
-goog.provide('csp.whitelistBypasses.jsonp');
-
-goog.require('goog.Uri');
-goog.require('goog.array');
 
 
 /**
  * Some JSONP-like bypasses only work if the CSP allows 'eval()'.
- * @type {!Array.<string>}
  */
-csp.whitelistBypasses.jsonp.NEEDS_EVAL = [
-  'googletagmanager.com',
-  'www.googletagmanager.com',
-  'www.googleadservices.com',
+export const NEEDS_EVAL: string[] = [
+  'googletagmanager.com', 'www.googletagmanager.com',
 
-  'google-analytics.com',
-  'ssl.google-analytics.com',
-  'www.google-analytics.com'
+  'www.googleadservices.com', 'google-analytics.com',
+  'ssl.google-analytics.com', 'www.google-analytics.com'
 ];
 
 
 
 /**
- * JSONP endpoints on commonly whitelisted origins (e.g. CDNs) that would allow
+ * JSONP endpoints on commonly allowlisted origins (e.g. CDNs) that would allow
  * a CSP bypass.
  * Only most common paths are listed here. Hence there might still be other
  * paths on these domains that would allow a bypass.
- * @type {!Array.<!goog.Uri>}
  */
-csp.whitelistBypasses.jsonp.URLS = goog.array.map([
+export const URLS: string[] = [
   '//bebezoo.1688.com/fragment/index.htm',
   '//www.google-analytics.com/gtm/js',
   '//googleads.g.doubleclick.net/pagead/conversion/1036918760/wcm',
@@ -178,4 +168,4 @@ csp.whitelistBypasses.jsonp.URLS = goog.array.map([
   '//c1n2.hypercomments.com/stream/subscribe',
   '//rec.ydf.yandex.ru/cookie',
   '//cdn.jsdelivr.net'
-], url => new goog.Uri(url));
+];
