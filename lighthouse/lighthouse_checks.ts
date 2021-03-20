@@ -143,4 +143,3 @@ export function evaluateForSyntaxErrors(parsedCsps: Csp[]): Finding[][] {
   }
   return allFindings;
 }
-

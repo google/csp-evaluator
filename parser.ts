@@ -98,4 +98,3 @@ function normalizeDirectiveValue(directiveValue: string): string {
 }
 
 export const TEST_ONLY = {normalizeDirectiveValue};
-
