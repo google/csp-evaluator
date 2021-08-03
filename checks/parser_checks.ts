@@ -135,7 +135,7 @@ export function checkInvalidKeyword(parsedCsp: Csp): Finding[] {
         }
       } else if (directive === csp.Directive.TRUSTED_TYPES) {
         // Continue, if it's an allowed Trusted Types keyword.
-        if (value === '\'allow-duplicates\'') {
+        if (value === '\'allow-duplicates\'' || value === '\'none\'') {
           continue;
         }
       } else {
