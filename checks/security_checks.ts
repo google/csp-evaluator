@@ -169,8 +169,7 @@ export function checkMissingObjectSrcDirective(parsedCsp: Csp): Finding[] {
   } else if (Directive.DEFAULT_SRC in parsedCsp.directives) {
     objectRestrictions = parsedCsp.directives[Directive.DEFAULT_SRC];
   }
-  if (objectRestrictions !== undefined && objectRestrictions.length === 1 &&
-      objectRestrictions[0] === Keyword.NONE) {
+  if (objectRestrictions !== undefined && objectRestrictions.length >= 1) {
     return [];
   }
   return [new Finding(
