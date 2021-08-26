@@ -49,14 +49,6 @@ To run unit tests, run:
 npm install && npm test
 ```
 
-## Testing
-
-To run unit tests, run:
-
-```bash
-npm install && npm test
-```
-
 ## Example Usage
 
 ```javascript
