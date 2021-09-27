@@ -169,8 +169,7 @@ export function checkMissingObjectSrcDirective(parsedCsp: Csp): Finding[] {
   } else if (Directive.DEFAULT_SRC in parsedCsp.directives) {
     objectRestrictions = parsedCsp.directives[Directive.DEFAULT_SRC];
   }
-  if (objectRestrictions !== undefined && objectRestrictions.length === 1 &&
-      objectRestrictions[0] === Keyword.NONE) {
+  if (objectRestrictions !== undefined && objectRestrictions.length >= 1) {
     return [];
   }
   return [new Finding(
@@ -267,7 +266,7 @@ export function checkScriptAllowlistBypass(parsedCsp: Csp): Finding[] {
     if (value === Keyword.SELF) {
       violations.push(new Finding(
           Type.SCRIPT_ALLOWLIST_BYPASS,
-          `'self' can be problematic if you host JSONP, Angular or user ` +
+          `'self' can be problematic if you host JSONP, AngularJS or user ` +
               'uploaded files.',
           Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
       continue;

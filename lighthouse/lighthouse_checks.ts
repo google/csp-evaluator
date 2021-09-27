@@ -5,7 +5,7 @@
 
 import {CheckerFunction} from '../checks/checker';
 import {checkInvalidKeyword, checkMissingSemicolon, checkUnknownDirective} from '../checks/parser_checks';
-import {checkDeprecatedDirective, checkHasConfiguredReporting, checkMissingObjectSrcDirective, checkMissingScriptSrcDirective, checkMultipleMissingBaseUriDirective, checkNonceLength, checkScriptUnsafeInline} from '../checks/security_checks';
+import {checkDeprecatedDirective, checkMissingObjectSrcDirective, checkMissingScriptSrcDirective, checkMultipleMissingBaseUriDirective, checkNonceLength, checkPlainUrlSchemes, checkScriptUnsafeInline, checkWildcards} from '../checks/security_checks';
 import {checkAllowlistFallback, checkStrictDynamic, checkUnsafeInlineFallback} from '../checks/strictcsp_checks';
 import {Csp, Directive, Version} from '../csp';
 import {Finding} from '../finding';
@@ -93,13 +93,16 @@ export function evaluateForFailure(parsedCsps: Csp[]): Finding[] {
 
   // Check #2
   const effectiveCsps =
-      parsedCsps.map(csp => csp.getEffectiveCsp(Version.CSP3)).filter(csp => {
-        const directiveName = csp.getEffectiveDirective(Directive.SCRIPT_SRC);
-        return csp.directives[directiveName];
-      });
+      parsedCsps.map(csp => csp.getEffectiveCsp(Version.CSP3));
+  const effectiveCspsWithScript = effectiveCsps.filter(csp => {
+    const directiveName = csp.getEffectiveDirective(Directive.SCRIPT_SRC);
+    return csp.directives[directiveName];
+  });
   const robust = [
-    ...atLeastOnePasses(effectiveCsps, checkStrictDynamic),
-    ...atLeastOnePasses(effectiveCsps, checkScriptUnsafeInline),
+    ...atLeastOnePasses(effectiveCspsWithScript, checkStrictDynamic),
+    ...atLeastOnePasses(effectiveCspsWithScript, checkScriptUnsafeInline),
+    ...atLeastOnePasses(effectiveCsps, checkWildcards),
+    ...atLeastOnePasses(effectiveCsps, checkPlainUrlSchemes),
   ];
   return [...targetsXssFindings, ...robust];
 }
@@ -111,17 +114,12 @@ export function evaluateForFailure(parsedCsps: Csp[]): Finding[] {
  */
 export function evaluateForWarnings(parsedCsps: Csp[]): Finding[] {
   // Check #1 is implemented by Lighthouse directly
-  // Check #2
-  const hasReportingFindings =
-      atLeastOnePasses(parsedCsps, checkHasConfiguredReporting);
+  // Check #2 is no longer used in Lighthouse.
 
   // Check #3
-  const compatibleWithNonCompliantBrowsersFindings = [
+  return [
     ...atLeastOneFails(parsedCsps, checkUnsafeInlineFallback),
     ...atLeastOneFails(parsedCsps, checkAllowlistFallback)
-  ];
-  return [
-    ...hasReportingFindings, ...compatibleWithNonCompliantBrowsersFindings
   ];
 }
 
