@@ -262,6 +262,7 @@ export enum Directive {
   // Navigation directives
   FORM_ACTION = 'form-action',
   FRAME_ANCESTORS = 'frame-ancestors',
+  NAVIGATE_TO = 'navigate-to',
 
   // Reporting directives
   REPORT_TO = 'report-to',
