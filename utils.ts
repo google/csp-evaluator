@@ -42,7 +42,9 @@ export function getHostname(url: string): string {
   const hostname =
       new URL(
           'https://' +
-          getSchemeFreeUrl(url).replace('*', 'wildcard_placeholder'))
+      getSchemeFreeUrl(url)
+        .replace(':*', '')  // Remove wildcard port
+        .replace('*', 'wildcard_placeholder'))
           .hostname.replace('wildcard_placeholder', '*');
 
   // Some browsers strip the brackets from IPv6 addresses when you access the
