@@ -80,7 +80,9 @@ export function matchWildcardUrls(
   // encapsulated in this function such that callers of this function do not
   // have to worry about this detail.
   const cspUrl =
-      new URL(setScheme(cspUrlString.replace('*', 'wildcard_placeholder')));
+      new URL(setScheme(cspUrlString
+        .replace(':*', '')  // Remove wildcard port
+        .replace('*', 'wildcard_placeholder')));
   const listOfUrls = listOfUrlStrings.map(u => new URL(setScheme(u)));
   const host = cspUrl.hostname.toLowerCase();
   const hostHasWildcard = host.startsWith('wildcard_placeholder.');
