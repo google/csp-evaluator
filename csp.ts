@@ -214,6 +214,8 @@ export enum Keyword {
   UNSAFE_HASHED_ATTRIBUTES = '\'unsafe-hashed-attributes\'',
   UNSAFE_HASHES = '\'unsafe-hashes\'',
   REPORT_SAMPLE = '\'report-sample\''
+  BLOCK = '\'block\''
+  ALLOW = '\'allow\''
 }
 
 
@@ -277,6 +279,7 @@ export enum Directive {
   TRUSTED_TYPES = 'trusted-types',
   // https://github.com/WICG/trusted-types
   REQUIRE_TRUSTED_TYPES_FOR = 'require-trusted-types-for'
+  WEBRTC = 'webrtc',
 }
 
 /**
