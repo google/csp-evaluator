@@ -221,4 +221,20 @@ describe('Test Csp', () => {
     expect(isHash('\'asdfASDF=\'', true)).toBeFalse();
     expect(isHash('example.com', true)).toBeFalse();
   });
+
+  it('ParseNavigateTo', () => {
+    const testCsp = 'navigate-to \'self\'; script-src \'nonce-foo\'';
+    const parsed = (new CspParser(testCsp)).csp;
+
+    expect(parsed.policyHasStrictDynamic()).toBeFalse();
+    expect(parsed.policyHasScriptNonces()).toBeTrue();
+  });
+
+  it('ParseWebRtc', () => {
+    const testCsp = 'web-rtc \'allow\'; script-src \'nonce-foo\'';
+    const parsed = (new CspParser(testCsp)).csp;
+
+    expect(parsed.policyHasStrictDynamic()).toBeFalse();
+    expect(parsed.policyHasScriptNonces()).toBeTrue();
+  });
 });

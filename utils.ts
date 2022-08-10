@@ -39,13 +39,12 @@ export function getSchemeFreeUrl(url: string): string {
  * URLs and wildcards (aka `*`) in hostnames
  */
 export function getHostname(url: string): string {
-  const hostname =
-      new URL(
-          'https://' +
-      getSchemeFreeUrl(url)
-        .replace(':*', '')  // Remove wildcard port
-        .replace('*', 'wildcard_placeholder'))
-          .hostname.replace('wildcard_placeholder', '*');
+  const hostname = new URL(
+                       'https://' +
+                       getSchemeFreeUrl(url)
+                           .replace(':*', '')  // Remove wildcard port
+                           .replace('*', 'wildcard_placeholder'))
+                       .hostname.replace('wildcard_placeholder', '*');
 
   // Some browsers strip the brackets from IPv6 addresses when you access the
   // hostname. If the scheme free url starts with something that vaguely looks
@@ -81,8 +80,8 @@ export function matchWildcardUrls(
   // have to worry about this detail.
   const cspUrl =
       new URL(setScheme(cspUrlString
-        .replace(':*', '')  // Remove wildcard port
-        .replace('*', 'wildcard_placeholder')));
+                            .replace(':*', '')  // Remove wildcard port
+                            .replace('*', 'wildcard_placeholder')));
   const listOfUrls = listOfUrlStrings.map(u => new URL(setScheme(u)));
   const host = cspUrl.hostname.toLowerCase();
   const hostHasWildcard = host.startsWith('wildcard_placeholder.');
