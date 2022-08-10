@@ -38,7 +38,15 @@ npm install csp_evaluator
 To build, run:
 
 ```bash
-tsc --build
+npm install && tsc --build
+```
+
+## Testing
+
+To run unit tests, run:
+
+```bash
+npm install && npm test
 ```
 
 ## Example Usage
