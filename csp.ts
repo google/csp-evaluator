@@ -213,9 +213,9 @@ export enum Keyword {
   STRICT_DYNAMIC = '\'strict-dynamic\'',
   UNSAFE_HASHED_ATTRIBUTES = '\'unsafe-hashed-attributes\'',
   UNSAFE_HASHES = '\'unsafe-hashes\'',
-  REPORT_SAMPLE = '\'report-sample\''
-  BLOCK = '\'block\''
-  ALLOW = '\'allow\''
+  REPORT_SAMPLE = '\'report-sample\'',
+  BLOCK = '\'block\'',
+  ALLOW = '\'allow\'',
 }
 
 
@@ -223,7 +223,7 @@ export enum Keyword {
  * CSP directive source keywords.
  */
 export enum TrustedTypesSink {
-  SCRIPT = '\'script\''
+  SCRIPT = '\'script\'',
 }
 
 
@@ -278,7 +278,7 @@ export enum Directive {
   REQUIRE_SRI_FOR = 'require-sri-for',
   TRUSTED_TYPES = 'trusted-types',
   // https://github.com/WICG/trusted-types
-  REQUIRE_TRUSTED_TYPES_FOR = 'require-trusted-types-for'
+  REQUIRE_TRUSTED_TYPES_FOR = 'require-trusted-types-for',
   WEBRTC = 'webrtc',
 }
 
