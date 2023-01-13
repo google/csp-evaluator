@@ -132,7 +132,7 @@ export const URLS: string[] = [
   '//autocomplete.travelpayouts.com/avia',
   '//www.googleapis.com/freebase/v1/topic/m/0344_',
   '//mts1.googleapis.com/mapslt/ft',
-  '//api.twitter.com/1/statuses/oembed.json',
+  "//publish.twitter.com/oembed",
   '//fast.wistia.com/embed/medias/o75jtw7654.json',
   '//partner.googleadservices.com/gampad/ads',
   '//pass.yandex.ru/services',
