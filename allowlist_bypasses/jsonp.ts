@@ -166,5 +166,6 @@ export const URLS: string[] = [
   '//c1n2.hypercomments.com/stream/subscribe',
   '//rec.ydf.yandex.ru/cookie',
   '//cdn.jsdelivr.net',
-  '//dynamic.xkcd.com/api-0/jsonp/comic/538'
+  '//dynamic.xkcd.com/api-0/jsonp/comic/538',
+  '//gist.github.com/Ry0taK/f1ffd2bca07e2bcdf1cb834529712522.json'
 ];
