@@ -165,5 +165,6 @@ export const URLS: string[] = [
   '//maps.google.ru/maps/vt',
   '//c1n2.hypercomments.com/stream/subscribe',
   '//rec.ydf.yandex.ru/cookie',
-  '//cdn.jsdelivr.net'
+  '//cdn.jsdelivr.net',
+  '//dynamic.xkcd.com/api-0/jsonp/comic/538'
 ];

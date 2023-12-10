@@ -131,6 +131,7 @@
   "//a.tiles.mapbox.com/v3/zentralmedia.map-n2raeauc.jsonp",
   "//maps.google.ru/maps/vt",
   "//c1n2.hypercomments.com/stream/subscribe",
-  "//rec.ydf.yandex.ru/cookie"
+  "//rec.ydf.yandex.ru/cookie",
+  "//dynamic.xkcd.com/api-0/jsonp/comic/538"
  ]
 }
