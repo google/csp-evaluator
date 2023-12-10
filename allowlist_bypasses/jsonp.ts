@@ -168,5 +168,6 @@ export const URLS: string[] = [
   '//cdn.jsdelivr.net',
   '//dynamic.xkcd.com/api-0/jsonp/comic/538',
   '//gist.github.com/Ry0taK/f1ffd2bca07e2bcdf1cb834529712522.json',
-  '//meta.wikimedia.org/w/api.php?action=sitematrix&format=json'
+  '//meta.wikimedia.org/w/api.php?action=sitematrix&format=json',
+  '//www.flickr.com/services/oembed.json'
 ];
