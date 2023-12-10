@@ -169,5 +169,6 @@ export const URLS: string[] = [
   '//dynamic.xkcd.com/api-0/jsonp/comic/538',
   '//gist.github.com/Ry0taK/f1ffd2bca07e2bcdf1cb834529712522.json',
   '//meta.wikimedia.org/w/api.php?action=sitematrix&format=json',
-  '//www.flickr.com/services/oembed.json'
+  '//www.flickr.com/services/oembed.json',
+  '//api.pinterest.com/v3/pidgets/pins/info/'
 ];
