@@ -21,6 +21,7 @@
 
 import * as csp from '../csp';
 import {Csp, Keyword} from '../csp';
+import { EnforcedCsps } from '../enforced_csps';
 
 import {Finding, Severity, Type} from '../finding';
 
@@ -33,24 +34,26 @@ import {Finding, Severity, Type} from '../finding';
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkUnknownDirective(parsedCsp: Csp): Finding[] {
+export function checkUnknownDirective(parsedCsps: EnforcedCsps): Finding[] {
   const findings: Finding[] = [];
 
-  for (const directive of Object.keys(parsedCsp.directives)) {
-    if (csp.isDirective(directive)) {
-      // Directive is known.
-      continue;
-    }
-
-    if (directive.endsWith(':')) {
-      findings.push(new Finding(
-          Type.UNKNOWN_DIRECTIVE, 'CSP directives don\'t end with a colon.',
-          Severity.SYNTAX, directive));
-    } else {
-      findings.push(new Finding(
-          Type.UNKNOWN_DIRECTIVE,
-          'Directive "' + directive + '" is not a known CSP directive.',
-          Severity.SYNTAX, directive));
+  for (const cspChecked of parsedCsps) {
+    for (const directive of Object.keys(cspChecked.directives)) {
+      if (csp.isDirective(directive)) {
+        // Directive is known.
+        continue;
+      }
+  
+      if (directive.endsWith(':')) {
+        findings.push(new Finding(
+            Type.UNKNOWN_DIRECTIVE, 'CSP directives don\'t end with a colon.',
+            Severity.SYNTAX, directive));
+      } else {
+        findings.push(new Finding(
+            Type.UNKNOWN_DIRECTIVE,
+            'Directive "' + directive + '" is not a known CSP directive.',
+            Severity.SYNTAX, directive));
+      }
     }
   }
 
@@ -67,23 +70,25 @@ export function checkUnknownDirective(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkMissingSemicolon(parsedCsp: Csp): Finding[] {
+export function checkMissingSemicolon(parsedCsps: EnforcedCsps): Finding[] {
   const findings: Finding[] = [];
 
-  for (const [directive, directiveValues] of Object.entries(
-           parsedCsp.directives)) {
-    if (directiveValues === undefined) {
-      continue;
-    }
-    for (const value of directiveValues) {
-      // If we find a known directive inside a directive value, it is very
-      // likely that a semicolon was forgoten.
-      if (csp.isDirective(value)) {
-        findings.push(new Finding(
-            Type.MISSING_SEMICOLON,
-            'Did you forget the semicolon? ' +
-                '"' + value + '" seems to be a directive, not a value.',
-            Severity.SYNTAX, directive, value));
+  for (const cspChecked of parsedCsps) {
+    for (const [directive, directiveValues] of Object.entries(
+      cspChecked.directives)) {
+      if (directiveValues === undefined) {
+        continue;
+      }
+      for (const value of directiveValues) {
+        // If we find a known directive inside a directive value, it is very
+        // likely that a semicolon was forgoten.
+        if (csp.isDirective(value)) {
+          findings.push(new Finding(
+              Type.MISSING_SEMICOLON,
+              'Did you forget the semicolon? ' +
+                  '"' + value + '" seems to be a directive, not a value.',
+              Severity.SYNTAX, directive, value));
+        }
       }
     }
   }
@@ -100,54 +105,56 @@ export function checkMissingSemicolon(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkInvalidKeyword(parsedCsp: Csp): Finding[] {
+export function checkInvalidKeyword(parsedCsps: EnforcedCsps): Finding[] {
   const findings: Finding[] = [];
   const keywordsNoTicks =
       Object.values(Keyword).map((k) => k.replace(/'/g, ''));
 
-  for (const [directive, directiveValues] of Object.entries(
-           parsedCsp.directives)) {
-    if (directiveValues === undefined) {
-      continue;
-    }
-    for (const value of directiveValues) {
-      // Check if single ticks have been forgotten.
-      if (keywordsNoTicks.some((k) => k === value) ||
-          value.startsWith('nonce-') ||
-          value.match(/^(sha256|sha384|sha512)-/)) {
+  for (const cspChecked of parsedCsps) {
+    for (const [directive, directiveValues] of Object.entries(
+      cspChecked.directives)) {
+      if (directiveValues === undefined) {
+        continue;
+      }
+      for (const value of directiveValues) {
+        // Check if single ticks have been forgotten.
+        if (keywordsNoTicks.some((k) => k === value) ||
+            value.startsWith('nonce-') ||
+            value.match(/^(sha256|sha384|sha512)-/)) {
+          findings.push(new Finding(
+              Type.INVALID_KEYWORD,
+              'Did you forget to surround "' + value + '" with single-ticks?',
+              Severity.SYNTAX, directive, value));
+          continue;
+        }
+
+        // Continue, if the value doesn't start with single tick.
+        // All CSP keywords start with a single tick.
+        if (!value.startsWith('\'')) {
+          continue;
+        }
+
+        if (directive === csp.Directive.REQUIRE_TRUSTED_TYPES_FOR) {
+          // Continue, if it's an allowed Trusted Types sink.
+          if (value === csp.TrustedTypesSink.SCRIPT) {
+            continue;
+          }
+        } else if (directive === csp.Directive.TRUSTED_TYPES) {
+          // Continue, if it's an allowed Trusted Types keyword.
+          if (value === '\'allow-duplicates\'' || value === '\'none\'') {
+            continue;
+          }
+        } else {
+          // Continue, if it's a valid keyword.
+          if (csp.isKeyword(value) || csp.isHash(value) || csp.isNonce(value)) {
+            continue;
+          }
+        }
+
         findings.push(new Finding(
-            Type.INVALID_KEYWORD,
-            'Did you forget to surround "' + value + '" with single-ticks?',
+            Type.INVALID_KEYWORD, value + ' seems to be an invalid CSP keyword.',
             Severity.SYNTAX, directive, value));
-        continue;
       }
-
-      // Continue, if the value doesn't start with single tick.
-      // All CSP keywords start with a single tick.
-      if (!value.startsWith('\'')) {
-        continue;
-      }
-
-      if (directive === csp.Directive.REQUIRE_TRUSTED_TYPES_FOR) {
-        // Continue, if it's an allowed Trusted Types sink.
-        if (value === csp.TrustedTypesSink.SCRIPT) {
-          continue;
-        }
-      } else if (directive === csp.Directive.TRUSTED_TYPES) {
-        // Continue, if it's an allowed Trusted Types keyword.
-        if (value === '\'allow-duplicates\'' || value === '\'none\'') {
-          continue;
-        }
-      } else {
-        // Continue, if it's a valid keyword.
-        if (csp.isKeyword(value) || csp.isHash(value) || csp.isNonce(value)) {
-          continue;
-        }
-      }
-
-      findings.push(new Finding(
-          Type.INVALID_KEYWORD, value + ' seems to be an invalid CSP keyword.',
-          Severity.SYNTAX, directive, value));
     }
   }
 

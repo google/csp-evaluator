@@ -29,7 +29,7 @@ describe('Test Csp', () => {
         'https://example.com/foo.js foo.bar; ' +
         'img-src \'self\' https: data: blob:; ';
 
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
     expect(parsed.convertToString()).toBe(testCsp);
   });
 
@@ -37,7 +37,7 @@ describe('Test Csp', () => {
     const testCsp =
         'default-src \'unsafe-inline\' \'strict-dynamic\' \'nonce-123\' ' +
         '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
     const effectiveCsp = parsed.getEffectiveCsp(Version.CSP1);
 
     expect(effectiveCsp.directives[Directive.DEFAULT_SRC]).toEqual([
@@ -52,7 +52,7 @@ describe('Test Csp', () => {
     const testCsp =
         'default-src \'unsafe-inline\' \'strict-dynamic\' \'nonce-123\' ' +
         '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
     const effectiveCsp = parsed.getEffectiveCsp(Version.CSP2);
 
     expect(effectiveCsp.directives[Directive.DEFAULT_SRC]).toEqual([
@@ -67,7 +67,7 @@ describe('Test Csp', () => {
     const testCsp =
         'default-src \'unsafe-inline\' \'strict-dynamic\' \'nonce-123\' ' +
         '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
     const effectiveCsp = parsed.getEffectiveCsp(Version.CSP3);
 
     expect(effectiveCsp.directives[Directive.DEFAULT_SRC]).toEqual([
@@ -81,7 +81,7 @@ describe('Test Csp', () => {
 
   it('GetEffectiveDirective', () => {
     const testCsp = 'default-src https:; script-src foo.bar';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     const script = parsed.getEffectiveDirective(Directive.SCRIPT_SRC);
     expect(script).toBe(Directive.SCRIPT_SRC);
@@ -92,7 +92,7 @@ describe('Test Csp', () => {
 
   it('GetEffectiveDirectives', () => {
     const testCsp = 'default-src https:; script-src foo.bar';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     const directives = parsed.getEffectiveDirectives(
         [Directive.SCRIPT_SRC, Directive.STYLE_SRC]);
@@ -102,7 +102,7 @@ describe('Test Csp', () => {
 
   it('PolicyHasScriptNoncesScriptSrcWithNonce', () => {
     const testCsp = 'default-src https:; script-src \'nonce-test123\'';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasScriptNonces()).toBeTrue();
   });
@@ -111,7 +111,7 @@ describe('Test Csp', () => {
   it('PolicyHasScriptNoncesNoNonce', () => {
     const testCsp =
         'default-src https: \'nonce-ignored\'; script-src nonce-invalid';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasScriptNonces()).toBeFalse();
   });
@@ -119,7 +119,7 @@ describe('Test Csp', () => {
 
   it('PolicyHasScriptHashesScriptSrcWithHash', () => {
     const testCsp = 'default-src https:; script-src \'sha256-asdfASDF\'';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasScriptHashes()).toBeTrue();
   });
@@ -128,7 +128,7 @@ describe('Test Csp', () => {
   it('PolicyHasScriptHashesNoHash', () => {
     const testCsp =
         'default-src https: \'nonce-ignored\'; script-src sha256-invalid';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasScriptHashes()).toBeFalse();
   });
@@ -136,7 +136,7 @@ describe('Test Csp', () => {
 
   it('PolicyHasStrictDynamicScriptSrcWithStrictDynamic', () => {
     const testCsp = 'default-src https:; script-src \'strict-dynamic\'';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasStrictDynamic()).toBeTrue();
   });
@@ -144,7 +144,7 @@ describe('Test Csp', () => {
 
   it('PolicyHasStrictDynamicDefaultSrcWithStrictDynamic', () => {
     const testCsp = 'default-src https \'strict-dynamic\'';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasStrictDynamic()).toBeTrue();
   });
@@ -152,7 +152,7 @@ describe('Test Csp', () => {
 
   it('PolicyHasStrictDynamicNoStrictDynamic', () => {
     const testCsp = 'default-src \'strict-dynamic\'; script-src foo.bar';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasStrictDynamic()).toBeFalse();
   });
@@ -224,7 +224,7 @@ describe('Test Csp', () => {
 
   it('ParseNavigateTo', () => {
     const testCsp = 'navigate-to \'self\'; script-src \'nonce-foo\'';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasStrictDynamic()).toBeFalse();
     expect(parsed.policyHasScriptNonces()).toBeTrue();
@@ -232,7 +232,7 @@ describe('Test Csp', () => {
 
   it('ParseWebRtc', () => {
     const testCsp = 'web-rtc \'allow\'; script-src \'nonce-foo\'';
-    const parsed = (new CspParser(testCsp)).csp;
+    const parsed = (new CspParser(testCsp)).csps[0];
 
     expect(parsed.policyHasStrictDynamic()).toBeFalse();
     expect(parsed.policyHasScriptNonces()).toBeTrue();

@@ -32,7 +32,7 @@ import * as parserChecks from './parser_checks';
  * @param checkFunction check.
  */
 function checkCsp(test: string, checkFunction: CheckerFunction): Finding[] {
-  const parsedCsp = (new CspParser(test)).csp;
+  const parsedCsp = (new CspParser(test)).csps;
   return checkFunction(parsedCsp);
 }
 

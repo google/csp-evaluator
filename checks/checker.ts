@@ -3,10 +3,11 @@
  */
 
 import {Csp} from '../csp';
+import { EnforcedCsps } from '../enforced_csps';
 import {Finding} from '../finding';
 
 /**
- * A function that checks a given Csp for problems and returns an unordered
+ * A function that checks a list of Csps for problems and returns an unordered
  * list of Findings.
  */
-export type CheckerFunction = (csp: Csp) => Finding[];
+export type CheckerFunction = (csps: EnforcedCsps) => Finding[];

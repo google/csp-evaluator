@@ -16,13 +16,14 @@
  * limitations under the License.
  */
 
-import {CheckerFunction} from './checks/checker';
+import { CheckerFunction } from './checks/checker';
 import * as parserChecks from './checks/parser_checks';
 import * as securityChecks from './checks/security_checks';
 import * as strictcspChecks from './checks/strictcsp_checks';
 import * as csp from './csp';
-import {Csp, Version} from './csp';
-import {Finding} from './finding';
+import { Csp, Version } from './csp';
+import { EnforcedCsps } from './enforced_csps';
+import { Finding } from './finding';
 
 
 
@@ -33,7 +34,7 @@ import {Finding} from './finding';
  */
 export class CspEvaluator {
   version: Version;
-  csp: Csp;
+  csps: EnforcedCsps;
 
   /**
    * List of findings reported by checks.
@@ -41,19 +42,19 @@ export class CspEvaluator {
    */
   findings: Finding[] = [];
   /**
-   * @param parsedCsp A parsed Content Security Policy.
+   * @param parsedCsp A parsed list of Content Security Policy.
    * @param cspVersion CSP version to apply checks for.
    */
-  constructor(parsedCsp: Csp, cspVersion?: Version) {
+  constructor(parsedCsps: EnforcedCsps, cspVersion?: Version) {
     /**
      * CSP version.
      */
     this.version = cspVersion || csp.Version.CSP3;
 
     /**
-     * Parsed CSP.
+     * Parsed CSPs.
      */
-    this.csp = parsedCsp;
+    this.csps = parsedCsps;
   }
 
   /**
@@ -75,18 +76,18 @@ export class CspEvaluator {
     // supporting a specific version of CSP.
     // For example a browser supporting only CSP1 will ignore nonces and
     // therefore 'unsafe-inline' would not get ignored if a policy has nonces.
-    const effectiveCsp = this.csp.getEffectiveCsp(this.version, this.findings);
+    const effectiveCsps = this.csps.getEffectiveCsps(this.version, this.findings);
 
     // Checks independent of CSP version.
     if (parsedCspChecks) {
       for (const check of parsedCspChecks) {
-        this.findings = this.findings.concat(check(this.csp));
+        this.findings = this.findings.concat(check(this.csps));
       }
     }
 
     // Checks depenent on CSP version.
     for (const check of checks) {
-      this.findings = this.findings.concat(check(effectiveCsp));
+      this.findings = this.findings.concat(check(effectiveCsps));
     }
 
     return this.findings;

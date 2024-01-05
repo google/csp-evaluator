@@ -19,7 +19,7 @@
 
 
  import {Directive, Version} from '../csp';
- import {Finding, Severity} from '../finding';
+ import {Finding, Severity, Type} from '../finding';
  import {CspParser} from '../parser';
  
  import {CheckerFunction} from './checker';
@@ -32,7 +32,7 @@
   * @param checkFunction check.
   */
  function checkCsp(test: string, checkFunction: CheckerFunction): Finding[] {
-   const parsedCsp = (new CspParser(test)).csp;
+   const parsedCsp = (new CspParser(test)).csps;
    return checkFunction(parsedCsp);
  }
  
@@ -62,13 +62,13 @@
  
    it('CheckScriptUnsafeInlineWithNonce', () => {
      const test = 'script-src \'unsafe-inline\' \'nonce-foobar\'';
-     const parsedCsp = (new CspParser(test)).csp;
- 
-     let effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP1);
+     const parsedCsp = (new CspParser(test)).csps;
+   
+     let effectiveCsp = parsedCsp.getEffectiveCsps(Version.CSP1);
      let violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
      expect(violations.length).toBe(1);
- 
-     effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP3);
+   
+     effectiveCsp = parsedCsp.getEffectiveCsps(Version.CSP3);
      violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
      expect(violations.length).toBe(0);
    });
@@ -424,6 +424,25 @@
      expect(violations.every((v) => v.severity === Severity.MEDIUM)).toBeTrue();
    });
  
+   /** Tests for csp.securityChecks.checkSrcHttpWithHttps */
+   it('CheckSrcHttp_whenMultipleReportingPolicies', () => {
+     const test =
+         'script-src http://foo.bar https://test.com; report-uri http://test.com; report-uri https://test.com;';
+ 
+     const violations = checkCsp(test, securityChecks.checkSrcHttp);
+     expect(violations.length).toBe(2);
+     expect(violations.every((v) => v.severity === Severity.MEDIUM)).toBeTrue();
+   });
+ 
+   /** Tests for csp.securityChecks.checkSrcHttps */
+   it('CheckSrcHttp_whenReportingPolicyHttps', () => {
+     const test =
+         'script-src http://foo.bar https://test.com; report-uri https://test.com';
+ 
+     const violations = checkCsp(test, securityChecks.checkSrcHttp);
+     expect(violations.length).toBe(1);
+   });
+ 
    /** Tests for csp.securityChecks.checkHasConfiguredReporting */
    it('CheckHasConfiguredReporting_whenNoReporting', () => {
      const test = 'script-src \'nonce-aaaaaaaaaa\'';
@@ -433,6 +452,7 @@
  
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.INFO);
+     expect(violations[0].type).toBe(Type.REPORTING_DESTINATION_MISSING);
      expect(violations[0].directive).toBe('report-uri');
    });
  
@@ -444,6 +464,7 @@
  
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.INFO);
+     expect(violations[0].type).toBe(Type.REPORT_TO_ONLY);
      expect(violations[0].directive).toBe('report-to');
    });
  
@@ -464,5 +485,39 @@
          checkCsp(test, securityChecks.checkHasConfiguredReporting);
  
      expect(violations.length).toBe(0);
+   });
+ 
+   it('CheckHasConfiguredReporting_whenMultiplePolicies', () => {
+     const test =
+         'script-src \'nonce-aaaaaaaaaa\'; report-uri url, style-src \'self\'; report-uri otheruri';
+ 
+     const violations =
+         checkCsp(test, securityChecks.checkHasConfiguredReporting);
+ 
+     expect(violations.length).toBe(0);
+   });
+ 
+   it('CheckHasConfiguredReporting_whenMultiplePoliciesNoReporting', () => {
+     const test =
+         'script-src \'nonce-aaaaaaaaaa\'; report-uri url, style-src \'self\'';
+ 
+     const violations = checkCsp(test, securityChecks.checkHasConfiguredReporting);
+ 
+     expect(violations.length).toBe(1);
+     expect(violations[0].severity).toBe(Severity.INFO);
+     expect(violations[0].type).toBe(Type.REPORTING_DESTINATION_MISSING);
+     expect(violations[0].directive).toBe('report-uri');
+   });
+ 
+   it('CheckHasConfiguredReporting_whenMultiplePoliciesReportTo', () => {
+     const test =
+         'script-src \'nonce-aaaaaaaaaa\'; report-uri url, style-src \'self\'; report-to test';
+ 
+     const violations = checkCsp(test, securityChecks.checkHasConfiguredReporting);
+ 
+     expect(violations.length).toBe(1);
+     expect(violations[0].severity).toBe(Severity.INFO);
+     expect(violations[0].type).toBe(Type.REPORT_TO_ONLY);
+     expect(violations[0].directive).toBe('report-to');
    });
  });

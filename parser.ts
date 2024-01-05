@@ -17,6 +17,7 @@
  */
 
 import * as csp from './csp';
+import * as enforcedCsps from './enforced_csps';
 
 
 
@@ -25,41 +26,77 @@ import * as csp from './csp';
  * @unrestricted
  */
 export class CspParser {
-  csp: csp.Csp;
+  csps: enforcedCsps.EnforcedCsps;
+
   /**
    * @param unparsedCsp A Content Security Policy as string.
    */
-  constructor(unparsedCsp: string) {
+  constructor(unparsedCsps: string | string[]) {
     /**
      * Parsed CSP
      */
-    this.csp = new csp.Csp();
+    this.csps = new enforcedCsps.EnforcedCsps();
 
-    this.parse(unparsedCsp);
+    if (!Array.isArray(unparsedCsps)) {
+      unparsedCsps = [ (unparsedCsps as string) ];
+    }
+
+    this.parse(unparsedCsps);
   }
 
   /**
    * Parses a CSP from a string.
    * @param unparsedCsp CSP as string.
    */
-  parse(unparsedCsp: string): csp.Csp {
-    // Reset the internal state:
-    this.csp = new csp.Csp();
+  parse(unparsedCspList: string[]): enforcedCsps.EnforcedCsps {
+    const splitCspList: string[] = [];
+    unparsedCspList.forEach(policy => {
+      // For each token returned by splitting list on commas:
+      const policiesList: string[] = policy.split(',');
 
-    // Split CSP into directive tokens.
+      // Let policy be the result of parsing token, with a source of source, and disposition of disposition.
+      const filteredPoliciesList = policiesList.map(function (el, index) {
+        // If policy’s directive set is empty, continue.
+        if (el.trim() !== "") {
+          return el;
+        }
+      });
+
+      // Append policy to policies.
+      splitCspList.push(...policiesList);
+    });
+
+    splitCspList.forEach(currentCsp => {
+      this.csps.push(this.parseCsp(currentCsp));
+    });
+
+    return this.csps;
+  }
+
+
+  parseCsp(unparsedCsp: string): csp.Csp {
+    let retCsp: csp.Csp = new csp.Csp();
+
+    // For each token returned by strictly splitting serialized on the U+003B SEMICOLON character (;):
     const directiveTokens = unparsedCsp.split(';');
     for (let i = 0; i < directiveTokens.length; i++) {
+      // Strip leading and trailing ASCII whitespace from token.
       const directiveToken = directiveTokens[i].trim();
 
-      // Split directive tokens into directive name and directive values.
+      // If token is an empty string, or if token is not an ASCII string, continue.
+      if (directiveToken === "" || !/^[\x00-\xFF]*$/.test(directiveToken)) {
+        continue;
+      }
+
+      // Let directive name be the result of collecting a sequence of code points from token which are not ASCII whitespace.
+      // Let directive value be the result of splitting token on ASCII whitespace.
       const directiveParts = directiveToken.match(/\S+/g);
       if (Array.isArray(directiveParts)) {
+        // Set directive name to be the result of running ASCII lowercase on directive name.
         const directiveName = directiveParts[0].toLowerCase();
 
-        // If the set of directives already contains a directive whose name is a
-        // case insensitive match for directive name, ignore this instance of
-        // the directive and continue to the next token.
-        if (directiveName in this.csp.directives) {
+        // If policy’s directive set contains a directive whose name is directive name, continue.
+        if (directiveName in retCsp.directives) {
           continue;
         }
 
@@ -69,16 +106,20 @@ export class CspParser {
         const directiveValues: string[] = [];
         for (let directiveValue, j = 1; (directiveValue = directiveParts[j]);
              j++) {
+          // Let directive be a new directive whose name is directive name, and value is directive value.
           directiveValue = normalizeDirectiveValue(directiveValue);
           if (!directiveValues.includes(directiveValue)) {
             directiveValues.push(directiveValue);
           }
         }
-        this.csp.directives[directiveName] = directiveValues;
+
+        // Append directive to policy’s directive set.
+        retCsp.directives[directiveName] = directiveValues;
       }
     }
 
-    return this.csp;
+    // Return policy.
+    return retCsp;
   }
 }
 

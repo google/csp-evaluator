@@ -22,26 +22,26 @@ import 'jasmine';
 import {Csp} from './csp';
 import {CspEvaluator} from './evaluator';
 import {Finding, Severity, Type} from './finding';
+import { EnforcedCsps } from './enforced_csps';
 
 describe('Test evaluator', () => {
   it('CspEvaluator', () => {
-    const fakeCsp = new Csp();
+    const fakeCsp = new EnforcedCsps();
     const evaluator = new CspEvaluator(fakeCsp);
-    expect(evaluator.csp).toBe(fakeCsp);
+    expect(evaluator.csps).toBe(fakeCsp);
   });
 
   it('Evaluate', () => {
-    const fakeCsp = new (Csp)();
     const fakeFinding = new (Finding)(
-        Type.UNKNOWN_DIRECTIVE, 'Fake description', Severity.MEDIUM,
-        'fake-directive', 'fake-directive-value');
-    const fakeVerifier = (parsedCsp: Csp) => {
+        Type.UNKNOWN_DIRECTIVE, 'Fake description', Severity.MEDIUM, 'fake-directive', 'fake-directive-value');
+    
+    const fakeVerifier = (parsedCsp: EnforcedCsps) => {
       return [fakeFinding];
     };
 
+    const fakeCsp = new EnforcedCsps();
     const evaluator = new (CspEvaluator)(fakeCsp);
-    const findings =
-        evaluator.evaluate([fakeVerifier, fakeVerifier], [fakeVerifier]);
+    const findings = evaluator.evaluate([fakeVerifier, fakeVerifier], [fakeVerifier]);
 
     const expectedFindings = [fakeFinding, fakeFinding, fakeFinding];
     expect(findings).toEqual(expectedFindings);

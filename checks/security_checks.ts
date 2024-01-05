@@ -22,6 +22,7 @@ import * as flash from '../allowlist_bypasses/flash';
 import * as jsonp from '../allowlist_bypasses/jsonp';
 import * as csp from '../csp';
 import {Csp, Directive, Keyword} from '../csp';
+import { EnforcedCsps } from '../enforced_csps';
 import {Finding, Severity, Type} from '../finding';
 import * as utils from '../utils';
 
@@ -53,18 +54,19 @@ export const URL_SCHEMES_CAUSING_XSS: string[] = ['data:', 'http:', 'https:'];
  *  are active in a certain version of CSP (e.g. no unsafe-inline if a nonce
  *  is present).
  */
-export function checkScriptUnsafeInline(effectiveCsp: Csp): Finding[] {
-  const directiveName =
-      effectiveCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
-  const values: string[] = effectiveCsp.directives[directiveName] || [];
+export function checkScriptUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
+  for (const cspChecked of effectiveCsp) {
+    const directiveName = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
+    const values: string[] = cspChecked.directives[directiveName] || [];
 
-  // Check if unsafe-inline is present.
-  if (values.includes(Keyword.UNSAFE_INLINE)) {
-    return [new Finding(
-        Type.SCRIPT_UNSAFE_INLINE,
-        `'unsafe-inline' allows the execution of unsafe in-page scripts ` +
-            'and event handlers.',
-        Severity.HIGH, directiveName, Keyword.UNSAFE_INLINE)];
+    // Check if unsafe-inline is present.
+    if (values.includes(Keyword.UNSAFE_INLINE)) {
+      return [new Finding(
+          Type.SCRIPT_UNSAFE_INLINE,
+          `'unsafe-inline' allows the execution of unsafe in-page scripts ` +
+              'and event handlers.',
+          Severity.HIGH, directiveName, Keyword.UNSAFE_INLINE)];
+    }
   }
 
   return [];
@@ -80,19 +82,20 @@ export function checkScriptUnsafeInline(effectiveCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkScriptUnsafeEval(parsedCsp: Csp): Finding[] {
-  const directiveName = parsedCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
-  const values: string[] = parsedCsp.directives[directiveName] || [];
+export function checkScriptUnsafeEval(parsedCsps: EnforcedCsps): Finding[] {
+  for (const cspChecked of parsedCsps) {
+    const directiveName = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
+    const values: string[] = cspChecked.directives[directiveName] || [];
 
-  // Check if unsafe-eval is present.
-  if (values.includes(Keyword.UNSAFE_EVAL)) {
-    return [new Finding(
-        Type.SCRIPT_UNSAFE_EVAL,
-        `'unsafe-eval' allows the execution of code injected into DOM APIs ` +
-            'such as eval().',
-        Severity.MEDIUM_MAYBE, directiveName, Keyword.UNSAFE_EVAL)];
+    // Check if unsafe-eval is present.
+    if (values.includes(Keyword.UNSAFE_EVAL)) {
+      return [new Finding(
+          Type.SCRIPT_UNSAFE_EVAL,
+          `'unsafe-eval' allows the execution of code injected into DOM APIs ` +
+              'such as eval().',
+          Severity.MEDIUM_MAYBE, directiveName, Keyword.UNSAFE_EVAL)];
+    }
   }
-
   return [];
 }
 
@@ -106,20 +109,22 @@ export function checkScriptUnsafeEval(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkPlainUrlSchemes(parsedCsp: Csp): Finding[] {
+export function checkPlainUrlSchemes(parsedCsps: EnforcedCsps): Finding[] {
   const violations: Finding[] = [];
-  const directivesToCheck =
-      parsedCsp.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
 
-  for (const directive of directivesToCheck) {
-    const values = parsedCsp.directives[directive] || [];
-    for (const value of values) {
-      if (URL_SCHEMES_CAUSING_XSS.includes(value)) {
-        violations.push(new Finding(
-            Type.PLAIN_URL_SCHEMES,
-            value + ' URI in ' + directive + ' allows the execution of ' +
-                'unsafe scripts.',
-            Severity.HIGH, directive, value));
+  for (const cspChecked of parsedCsps) {
+    const directivesToCheck = cspChecked.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
+
+    for (const directive of directivesToCheck) {
+      const values = cspChecked.directives[directive] || [];
+      for (const value of values) {
+        if (URL_SCHEMES_CAUSING_XSS.includes(value)) {
+          violations.push(new Finding(
+              Type.PLAIN_URL_SCHEMES,
+              value + ' URI in ' + directive + ' allows the execution of ' +
+                  'unsafe scripts.',
+              Severity.HIGH, directive, value));
+        }
       }
     }
   }
@@ -137,20 +142,22 @@ export function checkPlainUrlSchemes(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkWildcards(parsedCsp: Csp): Finding[] {
+export function checkWildcards(parsedCsps: EnforcedCsps): Finding[] {
   const violations: Finding[] = [];
-  const directivesToCheck =
-      parsedCsp.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
 
-  for (const directive of directivesToCheck) {
-    const values = parsedCsp.directives[directive] || [];
-    for (const value of values) {
-      const url = utils.getSchemeFreeUrl(value);
-      if (url === '*') {
-        violations.push(new Finding(
-            Type.PLAIN_WILDCARD, directive + ` should not allow '*' as source`,
-            Severity.HIGH, directive, value));
-        continue;
+  for (const cspChecked of parsedCsps) {
+    const directivesToCheck = cspChecked.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
+
+    for (const directive of directivesToCheck) {
+      const values = cspChecked.directives[directive] || [];
+      for (const value of values) {
+        const url = utils.getSchemeFreeUrl(value);
+        if (url === '*') {
+          violations.push(new Finding(
+              Type.PLAIN_WILDCARD, directive + ` should not allow '*' as source`,
+              Severity.HIGH, directive, value));
+          continue;
+        }
       }
     }
   }
@@ -162,13 +169,17 @@ export function checkWildcards(parsedCsp: Csp): Finding[] {
  * Checks if object-src is restricted to none either directly or via a
  * default-src.
  */
-export function checkMissingObjectSrcDirective(parsedCsp: Csp): Finding[] {
+export function checkMissingObjectSrcDirective(parsedCsps: EnforcedCsps): Finding[] {
   let objectRestrictions: string[]|undefined = [];
-  if (Directive.OBJECT_SRC in parsedCsp.directives) {
-    objectRestrictions = parsedCsp.directives[Directive.OBJECT_SRC];
-  } else if (Directive.DEFAULT_SRC in parsedCsp.directives) {
-    objectRestrictions = parsedCsp.directives[Directive.DEFAULT_SRC];
+
+  for (const cspChecked of parsedCsps) {
+    if (Directive.OBJECT_SRC in cspChecked.directives) {
+      objectRestrictions = cspChecked.directives[Directive.OBJECT_SRC];
+    } else if (Directive.DEFAULT_SRC in cspChecked.directives) {
+      objectRestrictions = cspChecked.directives[Directive.DEFAULT_SRC];
+    }
   }
+
   if (objectRestrictions !== undefined && objectRestrictions.length >= 1) {
     return [];
   }
@@ -181,10 +192,12 @@ export function checkMissingObjectSrcDirective(parsedCsp: Csp): Finding[] {
 /**
  * Checks if script-src is restricted either directly or via a default-src.
  */
-export function checkMissingScriptSrcDirective(parsedCsp: Csp): Finding[] {
-  if (Directive.SCRIPT_SRC in parsedCsp.directives ||
-      Directive.DEFAULT_SRC in parsedCsp.directives) {
-    return [];
+export function checkMissingScriptSrcDirective(parsedCsps: EnforcedCsps): Finding[] {
+  for (const cspChecked of parsedCsps) {
+    if (Directive.SCRIPT_SRC in cspChecked.directives ||
+        Directive.DEFAULT_SRC in cspChecked.directives) {
+      return [];
+    }
   }
   return [new Finding(
       Type.MISSING_DIRECTIVES, 'script-src directive is missing.',
@@ -195,33 +208,43 @@ export function checkMissingScriptSrcDirective(parsedCsp: Csp): Finding[] {
  * Checks if the base-uri needs to be restricted and if so, whether it has been
  * restricted.
  */
-export function checkMissingBaseUriDirective(parsedCsp: Csp): Finding[] {
-  return checkMultipleMissingBaseUriDirective([parsedCsp]);
+export function checkMissingBaseUriDirective(parsedCsps: EnforcedCsps): Finding[] {
+  const findings: Finding[] = [];
+
+  // base-uri can be used to bypass nonce based CSPs and hash based CSPs that
+  // use strict dynamic
+  const needsBaseUri = (
+    parsedCsps.policyHasScriptNonces() ||
+    (parsedCsps.policyHasScriptHashes() && parsedCsps.policyHasStrictDynamic())
+  );
+
+  if (needsBaseUri) {
+    for (const csp of parsedCsps) {
+      if (!(Directive.BASE_URI in csp.directives))  {
+        const description = 'Missing base-uri allows the injection of base tags. ' +
+        'They can be used to set the base URL for all relative (script) ' +
+        'URLs to an attacker controlled domain. ' +
+        `Can you set it to 'none' or 'self'?`;
+        findings.push(new Finding(
+            Type.MISSING_DIRECTIVES, description, Severity.HIGH,
+            Directive.BASE_URI));
+      }
+    }
+  }
+  
+  return findings;
 }
 
 /**
  * Checks if the base-uri needs to be restricted and if so, whether it has been
  * restricted.
  */
-export function checkMultipleMissingBaseUriDirective(parsedCsps: Csp[]):
-    Finding[] {
-  // base-uri can be used to bypass nonce based CSPs and hash based CSPs that
-  // use strict dynamic
-  const needsBaseUri = (csp: Csp) =>
-      (csp.policyHasScriptNonces() ||
-       (csp.policyHasScriptHashes() && csp.policyHasStrictDynamic()));
-  const hasBaseUri = (csp: Csp) => Directive.BASE_URI in csp.directives;
-
-  if (parsedCsps.some(needsBaseUri) && !parsedCsps.some(hasBaseUri)) {
-    const description = 'Missing base-uri allows the injection of base tags. ' +
-        'They can be used to set the base URL for all relative (script) ' +
-        'URLs to an attacker controlled domain. ' +
-        `Can you set it to 'none' or 'self'?`;
-    return [new Finding(
-        Type.MISSING_DIRECTIVES, description, Severity.HIGH,
-        Directive.BASE_URI)];
+export function checkMultipleMissingBaseUriDirective(parsedCsps: EnforcedCsps[]): Finding[] {
+  let findings: Finding[] = [];
+  for (const csp of parsedCsps) {
+    findings = findings.concat(checkMissingBaseUriDirective(csp));
   }
-  return [];
+  return findings;
 }
 
 
@@ -234,11 +257,11 @@ export function checkMultipleMissingBaseUriDirective(parsedCsps: Csp[]):
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkMissingDirectives(parsedCsp: Csp): Finding[] {
+export function checkMissingDirectives(parsedCsps: EnforcedCsps): Finding[] {
   return [
-    ...checkMissingObjectSrcDirective(parsedCsp),
-    ...checkMissingScriptSrcDirective(parsedCsp),
-    ...checkMissingBaseUriDirective(parsedCsp),
+    ...checkMissingObjectSrcDirective(parsedCsps),
+    ...checkMissingScriptSrcDirective(parsedCsps),
+    ...checkMissingBaseUriDirective(parsedCsps),
   ];
 }
 
@@ -252,75 +275,76 @@ export function checkMissingDirectives(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkScriptAllowlistBypass(parsedCsp: Csp): Finding[] {
+export function checkScriptAllowlistBypass(parsedCsps: EnforcedCsps): Finding[] {
   const violations: Finding[] = [];
-  const effectiveScriptSrcDirective =
-      parsedCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
-  const scriptSrcValues =
-      parsedCsp.directives[effectiveScriptSrcDirective] || [];
-  if (scriptSrcValues.includes(Keyword.NONE)) {
-    return violations;
-  }
 
-  for (const value of scriptSrcValues) {
-    if (value === Keyword.SELF) {
-      violations.push(new Finding(
-          Type.SCRIPT_ALLOWLIST_BYPASS,
-          `'self' can be problematic if you host JSONP, AngularJS or user ` +
-              'uploaded files.',
-          Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
-      continue;
+  for (const cspChecked of parsedCsps) {
+    const effectiveScriptSrcDirective = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
+    const scriptSrcValues = cspChecked.directives[effectiveScriptSrcDirective] || [];
+    if (scriptSrcValues.includes(Keyword.NONE)) {
+      return violations;
     }
 
-    // Ignore keywords, nonces and hashes (they start with a single quote).
-    if (value.startsWith('\'')) {
-      continue;
-    }
-
-    // Ignore standalone schemes and things that don't look like URLs (no dot).
-    if (csp.isUrlScheme(value) || value.indexOf('.') === -1) {
-      continue;
-    }
-
-    const url = '//' + utils.getSchemeFreeUrl(value);
-
-    const angularBypass = utils.matchWildcardUrls(url, angular.URLS);
-
-    let jsonpBypass = utils.matchWildcardUrls(url, jsonp.URLS);
-
-    // Some JSONP bypasses only work in presence of unsafe-eval.
-    if (jsonpBypass) {
-      const evalRequired = jsonp.NEEDS_EVAL.includes(jsonpBypass.hostname);
-      const evalPresent = scriptSrcValues.includes(Keyword.UNSAFE_EVAL);
-      if (evalRequired && !evalPresent) {
-        jsonpBypass = null;
+    for (const value of scriptSrcValues) {
+      if (value === Keyword.SELF) {
+        violations.push(new Finding(
+            Type.SCRIPT_ALLOWLIST_BYPASS,
+            `'self' can be problematic if you host JSONP, AngularJS or user ` +
+                'uploaded files.',
+            Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
+        continue;
       }
-    }
 
-    if (jsonpBypass || angularBypass) {
-      let bypassDomain = '';
-      let bypassTxt = '';
+      // Ignore keywords, nonces and hashes (they start with a single quote).
+      if (value.startsWith('\'')) {
+        continue;
+      }
+
+      // Ignore standalone schemes and things that don't look like URLs (no dot).
+      if (csp.isUrlScheme(value) || value.indexOf('.') === -1) {
+        continue;
+      }
+
+      const url = '//' + utils.getSchemeFreeUrl(value);
+
+      const angularBypass = utils.matchWildcardUrls(url, angular.URLS);
+
+      let jsonpBypass = utils.matchWildcardUrls(url, jsonp.URLS);
+
+      // Some JSONP bypasses only work in presence of unsafe-eval.
       if (jsonpBypass) {
-        bypassDomain = jsonpBypass.hostname;
-        bypassTxt = ' JSONP endpoints';
-      }
-      if (angularBypass) {
-        bypassDomain = angularBypass.hostname;
-        bypassTxt += (bypassTxt.trim() === '') ? '' : ' and';
-        bypassTxt += ' Angular libraries';
+        const evalRequired = jsonp.NEEDS_EVAL.includes(jsonpBypass.hostname);
+        const evalPresent = scriptSrcValues.includes(Keyword.UNSAFE_EVAL);
+        if (evalRequired && !evalPresent) {
+          jsonpBypass = null;
+        }
       }
 
-      violations.push(new Finding(
-          Type.SCRIPT_ALLOWLIST_BYPASS,
-          bypassDomain + ' is known to host' + bypassTxt +
-              ' which allow to bypass this CSP.',
-          Severity.HIGH, effectiveScriptSrcDirective, value));
-    } else {
-      violations.push(new Finding(
-          Type.SCRIPT_ALLOWLIST_BYPASS,
-          `No bypass found; make sure that this URL doesn't serve JSONP ` +
-              'replies or Angular libraries.',
-          Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
+      if (jsonpBypass || angularBypass) {
+        let bypassDomain = '';
+        let bypassTxt = '';
+        if (jsonpBypass) {
+          bypassDomain = jsonpBypass.hostname;
+          bypassTxt = ' JSONP endpoints';
+        }
+        if (angularBypass) {
+          bypassDomain = angularBypass.hostname;
+          bypassTxt += (bypassTxt.trim() === '') ? '' : ' and';
+          bypassTxt += ' Angular libraries';
+        }
+
+        violations.push(new Finding(
+            Type.SCRIPT_ALLOWLIST_BYPASS,
+            bypassDomain + ' is known to host' + bypassTxt +
+                ' which allow to bypass this CSP.',
+            Severity.HIGH, effectiveScriptSrcDirective, value));
+      } else {
+        violations.push(new Finding(
+            Type.SCRIPT_ALLOWLIST_BYPASS,
+            `No bypass found; make sure that this URL doesn't serve JSONP ` +
+                'replies or Angular libraries.',
+            Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
+      }
     }
   }
 
@@ -337,39 +361,40 @@ export function checkScriptAllowlistBypass(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkFlashObjectAllowlistBypass(parsedCsp: Csp): Finding[] {
+export function checkFlashObjectAllowlistBypass(parsedCsps: EnforcedCsps): Finding[] {
   const violations = [];
-  const effectiveObjectSrcDirective =
-      parsedCsp.getEffectiveDirective(Directive.OBJECT_SRC);
-  const objectSrcValues =
-      parsedCsp.directives[effectiveObjectSrcDirective] || [];
 
-  // If flash is not allowed in plugin-types, continue.
-  const pluginTypes = parsedCsp.directives[Directive.PLUGIN_TYPES];
-  if (pluginTypes && !pluginTypes.includes('application/x-shockwave-flash')) {
-    return [];
-  }
+  for (const cspChecked of parsedCsps) {
+    const effectiveObjectSrcDirective = cspChecked.getEffectiveDirective(Directive.OBJECT_SRC);
+    const objectSrcValues = cspChecked.directives[effectiveObjectSrcDirective] || [];
 
-  for (const value of objectSrcValues) {
-    // Nothing to do here if 'none'.
-    if (value === Keyword.NONE) {
+    // If flash is not allowed in plugin-types, continue.
+    const pluginTypes = cspChecked.directives[Directive.PLUGIN_TYPES];
+    if (pluginTypes && !pluginTypes.includes('application/x-shockwave-flash')) {
       return [];
     }
 
-    const url = '//' + utils.getSchemeFreeUrl(value);
-    const flashBypass = utils.matchWildcardUrls(url, flash.URLS);
+    for (const value of objectSrcValues) {
+      // Nothing to do here if 'none'.
+      if (value === Keyword.NONE) {
+        return [];
+      }
 
-    if (flashBypass) {
-      violations.push(new Finding(
-          Type.OBJECT_ALLOWLIST_BYPASS,
-          flashBypass.hostname +
-              ' is known to host Flash files which allow to bypass this CSP.',
-          Severity.HIGH, effectiveObjectSrcDirective, value));
-    } else if (effectiveObjectSrcDirective === Directive.OBJECT_SRC) {
-      violations.push(new Finding(
-          Type.OBJECT_ALLOWLIST_BYPASS,
-          `Can you restrict object-src to 'none' only?`, Severity.MEDIUM_MAYBE,
-          effectiveObjectSrcDirective, value));
+      const url = '//' + utils.getSchemeFreeUrl(value);
+      const flashBypass = utils.matchWildcardUrls(url, flash.URLS);
+
+      if (flashBypass) {
+        violations.push(new Finding(
+            Type.OBJECT_ALLOWLIST_BYPASS,
+            flashBypass.hostname +
+                ' is known to host Flash files which allow to bypass this CSP.',
+            Severity.HIGH, effectiveObjectSrcDirective, value));
+      } else if (effectiveObjectSrcDirective === Directive.OBJECT_SRC) {
+        violations.push(new Finding(
+            Type.OBJECT_ALLOWLIST_BYPASS,
+            `Can you restrict object-src to 'none' only?`, Severity.MEDIUM_MAYBE,
+            effectiveObjectSrcDirective, value));
+      }
     }
   }
 
@@ -406,35 +431,37 @@ export function looksLikeIpAddress(maybeIp: string): boolean {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkIpSource(parsedCsp: Csp): Finding[] {
+export function checkIpSource(parsedCsps: EnforcedCsps): Finding[] {
   const violations: Finding[] = [];
 
-  // Function for checking if directive values contain IP addresses.
-  const checkIp = (directive: string, directiveValues: string[]) => {
-    for (const value of directiveValues) {
-      const host = utils.getHostname(value);
-      if (looksLikeIpAddress(host)) {
-        // Check if localhost.
-        // See 4.8 in https://www.w3.org/TR/CSP2/#match-source-expression
-        if (host === '127.0.0.1') {
-          violations.push(new Finding(
-              Type.IP_SOURCE,
-              directive + ' directive allows localhost as source. ' +
-                  'Please make sure to remove this in production environments.',
-              Severity.INFO, directive, value));
-        } else {
-          violations.push(new Finding(
-              Type.IP_SOURCE,
-              directive + ' directive has an IP-Address as source: ' + host +
-                  ' (will be ignored by browsers!). ',
-              Severity.INFO, directive, value));
+  for (const cspChecked of parsedCsps) {
+    // Function for checking if directive values contain IP addresses.
+    const checkIp = (directive: string, directiveValues: string[]) => {
+      for (const value of directiveValues) {
+        const host = utils.getHostname(value);
+        if (looksLikeIpAddress(host)) {
+          // Check if localhost.
+          // See 4.8 in https://www.w3.org/TR/CSP2/#match-source-expression
+          if (host === '127.0.0.1') {
+            violations.push(new Finding(
+                Type.IP_SOURCE,
+                directive + ' directive allows localhost as source. ' +
+                    'Please make sure to remove this in production environments.',
+                Severity.INFO, directive, value));
+          } else {
+            violations.push(new Finding(
+                Type.IP_SOURCE,
+                directive + ' directive has an IP-Address as source: ' + host +
+                    ' (will be ignored by browsers!). ',
+                Severity.INFO, directive, value));
+          }
         }
       }
-    }
-  };
+    };
 
-  // Apply check to values of all directives.
-  utils.applyCheckFunktionToDirectives(parsedCsp, checkIp);
+    // Apply check to values of all directives.
+    utils.applyCheckFunktionToDirectives(cspChecked, checkIp);
+  }
   return violations;
 }
 
@@ -448,34 +475,36 @@ export function checkIpSource(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkDeprecatedDirective(parsedCsp: Csp): Finding[] {
+export function checkDeprecatedDirective(parsedCsps: EnforcedCsps): Finding[] {
   const violations = [];
 
-  // More details: https://www.chromestatus.com/feature/5769374145183744
-  if (Directive.REFLECTED_XSS in parsedCsp.directives) {
-    violations.push(new Finding(
-        Type.DEPRECATED_DIRECTIVE,
-        'reflected-xss is deprecated since CSP2. ' +
-            'Please, use the X-XSS-Protection header instead.',
-        Severity.INFO, Directive.REFLECTED_XSS));
-  }
+  for (const cspChecked of parsedCsps) {
+    // More details: https://www.chromestatus.com/feature/5769374145183744
+    if (Directive.REFLECTED_XSS in cspChecked.directives) {
+      violations.push(new Finding(
+          Type.DEPRECATED_DIRECTIVE,
+          'reflected-xss is deprecated since CSP2. ' +
+              'Please, use the X-XSS-Protection header instead.',
+          Severity.INFO, Directive.REFLECTED_XSS));
+    }
 
-  // More details: https://www.chromestatus.com/feature/5680800376815616
-  if (Directive.REFERRER in parsedCsp.directives) {
-    violations.push(new Finding(
-        Type.DEPRECATED_DIRECTIVE,
-        'referrer is deprecated since CSP2. ' +
-            'Please, use the Referrer-Policy header instead.',
-        Severity.INFO, Directive.REFERRER));
-  }
+    // More details: https://www.chromestatus.com/feature/5680800376815616
+    if (Directive.REFERRER in cspChecked.directives) {
+      violations.push(new Finding(
+          Type.DEPRECATED_DIRECTIVE,
+          'referrer is deprecated since CSP2. ' +
+              'Please, use the Referrer-Policy header instead.',
+          Severity.INFO, Directive.REFERRER));
+    }
 
-  // More details: https://github.com/w3c/webappsec-csp/pull/327
-  if (Directive.DISOWN_OPENER in parsedCsp.directives) {
-    violations.push(new Finding(
-        Type.DEPRECATED_DIRECTIVE,
-        'disown-opener is deprecated since CSP3. ' +
-            'Please, use the Cross Origin Opener Policy header instead.',
-        Severity.INFO, Directive.DISOWN_OPENER));
+    // More details: https://github.com/w3c/webappsec-csp/pull/327
+    if (Directive.DISOWN_OPENER in cspChecked.directives) {
+      violations.push(new Finding(
+          Type.DEPRECATED_DIRECTIVE,
+          'disown-opener is deprecated since CSP3. ' +
+              'Please, use the Cross Origin Opener Policy header instead.',
+          Severity.INFO, Directive.DISOWN_OPENER));
+    }
   }
   return violations;
 }
@@ -490,35 +519,37 @@ export function checkDeprecatedDirective(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkNonceLength(parsedCsp: Csp): Finding[] {
+export function checkNonceLength(parsedCsps: EnforcedCsps): Finding[] {
   const noncePattern = new RegExp('^\'nonce-(.+)\'$');
   const violations: Finding[] = [];
 
-  utils.applyCheckFunktionToDirectives(
-      parsedCsp, (directive, directiveValues) => {
-        for (const value of directiveValues) {
-          const match = value.match(noncePattern);
-          if (!match) {
-            continue;
-          }
-          // Not a nonce.
+  for (const cspChecked of parsedCsps) {
+    utils.applyCheckFunktionToDirectives(
+      cspChecked, (directive, directiveValues) => {
+          for (const value of directiveValues) {
+            const match = value.match(noncePattern);
+            if (!match) {
+              continue;
+            }
+            // Not a nonce.
 
-          const nonceValue = match[1];
-          if (nonceValue.length < 8) {
-            violations.push(new Finding(
-                Type.NONCE_LENGTH,
-                'Nonces should be at least 8 characters long.', Severity.MEDIUM,
-                directive, value));
-          }
+            const nonceValue = match[1];
+            if (nonceValue.length < 8) {
+              violations.push(new Finding(
+                  Type.NONCE_LENGTH,
+                  'Nonces should be at least 8 characters long.', Severity.MEDIUM,
+                  directive, value));
+            }
 
-          if (!csp.isNonce(value, true)) {
-            violations.push(new Finding(
-                Type.NONCE_CHARSET,
-                'Nonces should only use the base64 charset.', Severity.INFO,
-                directive, value));
+            if (!csp.isNonce(value, true)) {
+              violations.push(new Finding(
+                  Type.NONCE_CHARSET,
+                  'Nonces should only use the base64 charset.', Severity.INFO,
+                  directive, value));
+            }
           }
-        }
-      });
+        });
+  }
 
   return violations;
 }
@@ -533,46 +564,72 @@ export function checkNonceLength(parsedCsp: Csp): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkSrcHttp(parsedCsp: Csp): Finding[] {
+export function checkSrcHttp(parsedCsps: EnforcedCsps): Finding[] {
   const violations: Finding[] = [];
 
-  utils.applyCheckFunktionToDirectives(
-      parsedCsp, (directive, directiveValues) => {
+  const directivesForcingHttps: string[] = [];
+  const directivesWithViolation: Record<string, string[]> = {};
+
+  for (const cspChecked of parsedCsps) {
+    utils.applyCheckFunktionToDirectives(
+      cspChecked, (directive, directiveValues) => {
         for (const value of directiveValues) {
-          const description = directive === Directive.REPORT_URI ?
-              'Use HTTPS to send violation reports securely.' :
-              'Allow only resources downloaded over HTTPS.';
-          if (value.startsWith('http://')) {
-            violations.push(new Finding(
-                Type.SRC_HTTP, description, Severity.MEDIUM, directive, value));
+          if (value == 'https:') {
+            directivesForcingHttps.push(directive);
+          } else if (value.startsWith('http://')) {
+            // Check if reporting violations via http:// is allowed
+            if (directive === Directive.REPORT_URI) {
+              violations.push(new Finding(
+                  Type.SRC_HTTP, 'Use HTTPS to send violation reports securely.', Severity.MEDIUM, Directive.REPORT_URI, value));
+            } else {
+              directivesWithViolation[directive] = directivesWithViolation[directive] ? directivesWithViolation[directive] : [];
+              directivesWithViolation[directive].push(directive);
+            }
           }
         }
       });
+  }
 
+  for (const directive in directivesWithViolation) {
+    for (const value in directivesWithViolation[directive]) {
+      if (directive in directivesForcingHttps) {
+        violations.push(new Finding(
+          Type.CONFLICTING_DIRECTIVES, 'Resources are only allowed over HTTPS but HTTP hosts are specified.', Severity.LOW, directive, value));
+      } else {
+        violations.push(new Finding(
+          Type.SRC_HTTP, 'Allow only resources downloaded over HTTPS.', Severity.MEDIUM, directive, value));
+      }
+    }
+  }
+  
   return violations;
 }
 
 /**
  * Checks if the policy has configured reporting in a robust manner.
  */
-export function checkHasConfiguredReporting(parsedCsp: Csp): Finding[] {
-  const reportUriValues: string[] =
-      parsedCsp.directives[Directive.REPORT_URI] || [];
-  if (reportUriValues.length > 0) {
-    return [];
+export function checkHasConfiguredReporting(parsedCsps: EnforcedCsps): Finding[] {
+  const findings: Finding[] = [];
+
+  for (const cspChecked of parsedCsps) {
+    const reportUriValues: string[] = cspChecked.directives[Directive.REPORT_URI] || [];
+    if (reportUriValues.length > 0) {
+      continue;
+    }
+
+    const reportToValues: string[] = cspChecked.directives[Directive.REPORT_TO] || [];
+    if (reportToValues.length > 0) {
+      findings.push(new Finding(
+          Type.REPORT_TO_ONLY,
+          `This CSP policy only provides a reporting destination via the 'report-to' directive. This directive is only supported in Chromium-based browsers so it is recommended to also use a 'report-uri' directive.`,
+          Severity.INFO, Directive.REPORT_TO));
+    } else {
+      findings.push(new Finding(
+          Type.REPORTING_DESTINATION_MISSING,
+          'This CSP policy does not configure a reporting destination. This makes it difficult to maintain the CSP policy over time and monitor for any breakages.',
+          Severity.INFO, Directive.REPORT_URI));
+    }
   }
 
-  const reportToValues: string[] =
-      parsedCsp.directives[Directive.REPORT_TO] || [];
-  if (reportToValues.length > 0) {
-    return [new Finding(
-        Type.REPORT_TO_ONLY,
-        `This CSP policy only provides a reporting destination via the 'report-to' directive. This directive is only supported in Chromium-based browsers so it is recommended to also use a 'report-uri' directive.`,
-        Severity.INFO, Directive.REPORT_TO)];
-  }
-
-  return [new Finding(
-      Type.REPORTING_DESTINATION_MISSING,
-      'This CSP policy does not configure a reporting destination. This makes it difficult to maintain the CSP policy over time and monitor for any breakages.',
-      Severity.INFO, Directive.REPORT_URI)];
+  return findings;
 }
