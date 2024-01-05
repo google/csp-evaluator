@@ -44,6 +44,8 @@
      const violations = checkCsp(test, securityChecks.checkScriptUnsafeInline);
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.HIGH);
+     expect(violations[0].type).toBe(Type.SCRIPT_UNSAFE_INLINE);
+     expect(violations[0].directive).toBe('script-src');
    });
  
    it('CheckScriptUnsafeInlineInDefaultSrc', () => {
@@ -51,6 +53,9 @@
  
      const violations = checkCsp(test, securityChecks.checkScriptUnsafeInline);
      expect(violations.length).toBe(1);
+     expect(violations[0].severity).toBe(Severity.HIGH);
+     expect(violations[0].type).toBe(Type.SCRIPT_UNSAFE_INLINE);
+     expect(violations[0].directive).toBe('default-src');
    });
  
    it('CheckScriptUnsafeInlineInDefaultSrcAndNotInScriptSrc', () => {
@@ -72,6 +77,48 @@
      violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
      expect(violations.length).toBe(0);
    });
+
+   /** Tests for csp.securityChecks.checkStyleUnsafeInline */
+   it('CheckStyleUnsafeInlineInStyleSrc', () => {
+    const test = 'default-src https:; style-src \'unsafe-inline\'';
+
+    const violations = checkCsp(test, securityChecks.checkStyleUnsafeInline);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.MEDIUM);
+    expect(violations[0].type).toBe(Type.STYLE_UNSAFE_INLINE);
+    expect(violations[0].directive).toBe('style-src');
+  });
+
+  it('CheckStyleUnsafeInlineInDefaultSrc', () => {
+    const test = 'default-src \'unsafe-inline\'; script-src \'self\'';
+
+    const violations = checkCsp(test, securityChecks.checkStyleUnsafeInline);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.MEDIUM);
+    expect(violations[0].type).toBe(Type.STYLE_UNSAFE_INLINE);
+    expect(violations[0].directive).toBe('default-src');
+  });
+
+  it('CheckStyleUnsafeInlineInDefaultSrcAndNotInScriptSrc', () => {
+    const test = 'default-src \'unsafe-inline\'; style-src https:';
+
+    const violations = checkCsp(test, securityChecks.checkStyleUnsafeInline);
+    expect(violations.length).toBe(0);
+  });
+
+  // TODO: Fix the hardcoded script references in the getEffectiveCsps
+  //it('CheckStyleUnsafeInlineWithNonce', () => {
+  //  const test = 'style-src \'unsafe-inline\' \'nonce-foobar\'';
+  //  const parsedCsp = (new CspParser(test)).csps;
+  //
+  //  let effectiveCsp = parsedCsp.getEffectiveCsps(Version.CSP1);
+  //  let violations = securityChecks.checkStyleUnsafeInline(effectiveCsp);
+  //  expect(violations.length).toBe(1);
+  //
+  //  effectiveCsp = parsedCsp.getEffectiveCsps(Version.CSP3);
+  //  violations = securityChecks.checkStyleUnsafeInline(effectiveCsp);
+  //  expect(violations.length).toBe(0);
+  //});
 
     /** Tests for csp.securityChecks.checkScriptWasmUnsafeEval */
     it('CheckScriptWasmUnsafeEvalInScriptSrc', () => {
@@ -155,6 +202,29 @@
      expect(violations.length).toBe(0);
    });
  
+   /** Tests for csp.securityChecks.checkPlainUrlSchemesInFormActions */
+   it('checkPlainUrlSchemesInFormActions', () => {
+     const test = 'form-action http: https:';
+ 
+     const violations = checkCsp(test, securityChecks.checkPlainUrlSchemesInFormActions);
+     expect(violations.length).toBe(2);
+     expect(violations[0].severity).toBe(Severity.LOW);
+     expect(violations[0].type).toBe(Type.PLAIN_URL_SCHEMES);
+     expect(violations[0].directive).toBe('form-action');
+     expect(violations[1].severity).toBe(Severity.LOW);
+     expect(violations[1].type).toBe(Type.PLAIN_URL_SCHEMES);
+     expect(violations[1].directive).toBe('form-action');
+   });
+ 
+   it('checkPlainUrlSchemesInFormActionsOK', () => {
+     const test =
+         'default-src https:; object-src \'none\'; script-src \'none\'; ' +
+         'base-uri \'none\'; form-action \'none\'';
+ 
+     const violations = checkCsp(test, securityChecks.checkPlainUrlSchemesInFormActions);
+     expect(violations.length).toBe(0);
+   });
+ 
    /** Tests for csp.securityChecks.checkWildcards */
    it('CheckWildcardsInScriptSrc', () => {
      const test = 'script-src * http://* //*';
@@ -196,69 +266,108 @@
    /** Tests for csp.securityChecks.checkMissingDirectives */
  
    it('CheckMissingDirectivesMissingObjectSrc', () => {
-     const test = 'script-src \'none\'';
+     const test = 'script-src \'none\'; style-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.HIGH);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('object-src');
    });
  
    it('CheckMissingDirectivesMissingScriptSrc', () => {
-     const test = 'object-src \'none\'';
+     const test = 'object-src \'none\'; style-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.HIGH);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('script-src');
+   });
+ 
+   it('CheckMissingDirectivesMissingStyleSrc', () => {
+     const test = 'script-src \'none\'; object-src \'none\'; form-action \'self\'';
+ 
+     const violations = checkCsp(test, securityChecks.checkMissingDirectives);
+     expect(violations.length).toBe(1);
+     expect(violations[0].severity).toBe(Severity.LOW);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('style-src');
+   });
+ 
+   it('CheckMissingDirectivesMissingFormAction', () => {
+     const test = 'script-src \'none\'; object-src \'none\'; style-src \'none\'';
+ 
+     const violations = checkCsp(test, securityChecks.checkMissingDirectives);
+     expect(violations.length).toBe(1);
+     expect(violations[0].severity).toBe(Severity.LOW);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('form-action');
    });
  
    it('CheckMissingDirectivesObjectSrcSelf', () => {
-     const test = 'object-src \'self\'';
+     const test = 'object-src \'self\'; style-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.HIGH);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('script-src');
    });
  
    it('CheckMissingDirectivesMissingBaseUriInNonceCsp', () => {
-     const test = 'script-src \'nonce-123\'; object-src \'none\'';
+     const test = 'script-src \'nonce-123\'; object-src \'none\'; style-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.HIGH);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('base-uri');
    });
  
    it('CheckMissingDirectivesMissingBaseUriInHashWStrictDynamicCsp', () => {
      const test =
-         'script-src \'sha256-123456\' \'strict-dynamic\'; object-src \'none\'';
+         'script-src \'sha256-123456\' \'strict-dynamic\'; object-src \'none\'; style-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(1);
      expect(violations[0].severity).toBe(Severity.HIGH);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('base-uri');
    });
  
    it('CheckMissingDirectivesMissingBaseUriInHashCsp', () => {
-     const test = 'script-src \'sha256-123456\'; object-src \'none\'';
+     const test = 'script-src \'sha256-123456\'; object-src \'none\'; style-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(0);
    });
  
-   it('CheckMissingDirectivesScriptAndObjectSrcSet', () => {
-     const test = 'script-src \'none\'; object-src \'none\'';
+   it('CheckMissingDirectivesAllSetExplicit', () => {
+     const test = 'script-src \'none\'; object-src \'none\'; style-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(0);
    });
  
    it('CheckMissingDirectivesDefaultSrcSet', () => {
-     const test = 'default-src https:;';
+     const test = 'default-src https:; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(0);
    });
  
+   it('CheckMissingDirectivesDefaultSrcSetNoFormAction', () => {
+     const test = 'default-src https:';
+ 
+     const violations = checkCsp(test, securityChecks.checkMissingDirectives);
+     expect(violations.length).toBe(1);
+     expect(violations[0].type).toBe(Type.MISSING_DIRECTIVES);
+     expect(violations[0].directive).toBe('form-action');
+   });
+ 
    it('CheckMissingDirectivesDefaultSrcSetToNone', () => {
-     const test = 'default-src \'none\';';
+     const test = 'default-src \'none\'; form-action \'self\'';
  
      const violations = checkCsp(test, securityChecks.checkMissingDirectives);
      expect(violations.length).toBe(0);

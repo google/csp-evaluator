@@ -54,22 +54,58 @@ export const URL_SCHEMES_CAUSING_XSS: string[] = ['data:', 'http:', 'https:'];
  *  is present).
  */
 export function checkScriptUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
+  const findings: Finding[] = [];
+
   for (const cspChecked of effectiveCsp) {
     const directiveName = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
     const values: string[] = cspChecked.directives[directiveName] || [];
 
     // Check if unsafe-inline is present.
     if (values.includes(Keyword.UNSAFE_INLINE)) {
-      return [new Finding(
+      findings.push(new Finding(
           Type.SCRIPT_UNSAFE_INLINE,
           `'unsafe-inline' allows the execution of unsafe in-page scripts ` +
               'and event handlers.',
-          Severity.HIGH, directiveName, Keyword.UNSAFE_INLINE)];
+          Severity.HIGH, directiveName, Keyword.UNSAFE_INLINE));
     }
   }
 
-  return [];
+  return findings;
 }
+
+
+/**
+ * Checks if passed csp allows inline styles.
+ * Findings of this check are critical and FP free.
+ * unsafe-inline is ignored in the presence of a nonce or a hash. This check
+ * does not account for this and therefore the effectiveCsp needs to be passed.
+ *
+ * Example policy where this check would trigger:
+ *  style-src 'unsafe-inline'
+ *
+ * @param effectiveCsp A parsed csp that only contains values which
+ *  are active in a certain version of CSP (e.g. no unsafe-inline if a nonce
+ *  is present).
+ */
+export function checkStyleUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
+  const findings: Finding[] = [];
+
+  for (const cspChecked of effectiveCsp) {
+    const directiveName = cspChecked.getEffectiveDirective(Directive.STYLE_SRC);
+    const values: string[] = cspChecked.directives[directiveName] || [];
+
+    // Check if unsafe-inline is present.
+    if (values.includes(Keyword.UNSAFE_INLINE)) {
+      findings.push(new Finding(
+          Type.STYLE_UNSAFE_INLINE,
+          'Unsafe inline stylesheet are allowed. This could help social engineering attacks in case of content injection.',
+          Severity.MEDIUM, directiveName, Keyword.UNSAFE_INLINE));
+    }
+  }
+
+  return findings;
+}
+
 
 /**
  * Checks if passed csp allows web assembly eval in scripts.
@@ -161,6 +197,34 @@ export function checkPlainUrlSchemes(parsedCsps: EnforcedCsps): Finding[] {
 
 
 /**
+ * Checks if plain URL schemes (e.g. http:) are allowed in the form-action directive.
+ * Findings of this check have a low severity and are FP free.
+ *
+ * Example policy where this check would trigger:
+ *  form-action https: http:
+ *
+ * @param parsedCsp Parsed CSP.
+ */
+export function checkPlainUrlSchemesInFormActions(parsedCsps: EnforcedCsps): Finding[] {
+  const violations: Finding[] = [];
+
+  for (const cspChecked of parsedCsps) {
+    const values = cspChecked.directives[Directive.FORM_ACTION] || [];
+    for (const value of values) {
+      if (value == 'https:' || value == 'http:') {
+        violations.push(new Finding(
+            Type.PLAIN_URL_SCHEMES,
+            'Form actions only has protocol restrictions and still allows arbitrary hosts. This could help social engineering attacks in case of content injection.',
+            Severity.LOW, Directive.FORM_ACTION, value));
+      }
+    }
+  }
+
+  return violations;
+}
+
+
+/**
  * Checks if csp contains wildcards in sensitive directives.
  * Findings of this check have a high severity and are FP free.
  *
@@ -232,6 +296,36 @@ export function checkMissingScriptSrcDirective(parsedCsps: EnforcedCsps): Findin
 }
 
 /**
+ * Checks if style-src is restricted either directly or via a default-src.
+ */
+export function checkMissingStyleSrcDirective(parsedCsps: EnforcedCsps): Finding[] {
+  for (const cspChecked of parsedCsps) {
+    if (Directive.STYLE_SRC in cspChecked.directives ||
+        Directive.DEFAULT_SRC in cspChecked.directives) {
+      return [];
+    }
+  }
+  return [new Finding(
+      Type.MISSING_DIRECTIVES, 'No stylesheet restrictions are present. This could help social engineering attacks in case of content injection.',
+      Severity.LOW, Directive.STYLE_SRC)];
+}
+
+
+/**
+ * Checks if form-action is restricted.
+ */
+export function checkMissingFormActionDirective(parsedCsps: EnforcedCsps): Finding[] {
+  for (const cspChecked of parsedCsps) {
+    if (Directive.FORM_ACTION in cspChecked.directives) {
+      return [];
+    }
+  }
+  return [new Finding(
+      Type.MISSING_DIRECTIVES, 'No form action restrictions are present. This could help social engineering attacks in case of content injection.',
+      Severity.LOW, Directive.FORM_ACTION)];
+}
+
+/**
  * Checks if the base-uri needs to be restricted and if so, whether it has been
  * restricted.
  */
@@ -289,6 +383,8 @@ export function checkMissingDirectives(parsedCsps: EnforcedCsps): Finding[] {
     ...checkMissingObjectSrcDirective(parsedCsps),
     ...checkMissingScriptSrcDirective(parsedCsps),
     ...checkMissingBaseUriDirective(parsedCsps),
+    ...checkMissingStyleSrcDirective(parsedCsps),
+    ...checkMissingFormActionDirective(parsedCsps)
   ];
 }
 
