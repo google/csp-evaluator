@@ -19,10 +19,10 @@
 
 import 'jasmine';
 
-import {Finding, Severity} from '../finding';
-import {CspParser} from '../parser';
+import { Finding, Severity } from '../finding';
+import { CspParser } from '../parser'; 
 
-import {CheckerFunction} from './checker';
+import { CheckerFunction } from './checker';
 import * as parserChecks from './parser_checks';
 
 /**

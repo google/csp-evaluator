@@ -3,7 +3,7 @@
  */
 
 import { EnforcedCsps } from '../enforced_csps';
-import {Finding} from '../finding';
+import { Finding } from '../finding';
 
 /**
  * A function that checks a list of Csps for problems and returns an unordered

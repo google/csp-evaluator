@@ -18,7 +18,7 @@
  */
 
 
-import * as csp from './csp';
+import { Csp } from './csp';
 
 
 /**
@@ -133,7 +133,7 @@ export function matchWildcardUrls(
  *   should get applied on directive values.
  */
 export function applyCheckFunktionToDirectives(
-    parsedCsp: csp.Csp,
+    parsedCsp: Csp,
     check: (directive: string, directiveValues: string[]) => void,
 ) {
   const directiveNames = Object.keys(parsedCsp.directives);

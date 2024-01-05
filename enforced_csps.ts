@@ -18,7 +18,7 @@
  */
 
 
-import {Csp, Directive, Keyword, Version, isHash, isNonce} from './csp';
+import { Csp, Directive, Keyword, Version, isHash, isNonce } from './csp';
 import { Finding, Severity, Type } from './finding';
 
 /**

@@ -17,10 +17,10 @@
  * @author lwe@google.com (Lukas Weichselbaum)
  */
 
-import {Finding, Severity} from '../finding';
-import {CspParser} from '../parser';
+import { Finding, Severity } from '../finding';
+import { CspParser } from '../parser';
 
-import {CheckerFunction} from './checker';
+import { CheckerFunction } from './checker';
 import * as strictcspChecks from './strictcsp_checks';
 
 

@@ -19,8 +19,8 @@
 
 import 'jasmine';
 
-import {Directive, Keyword} from './csp';
-import {Finding, Severity, Type} from './finding';
+import { Directive, Keyword } from './csp';
+import { Finding, Severity, Type } from './finding';
 
 
 describe('Test finding', () => {

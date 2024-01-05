@@ -19,7 +19,7 @@
 
 import 'jasmine';
 
-import {CspParser, TEST_ONLY} from './parser';
+import { CspParser, TEST_ONLY } from './parser';
 
 
 describe('Test parser', () => {

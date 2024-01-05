@@ -19,8 +19,8 @@
 
 import 'jasmine';
 
-import {EnforcedCsps} from './enforced_csps';
-import {CspParser} from './parser';
+import { EnforcedCsps } from './enforced_csps';
+import { CspParser } from './parser';
 
 describe('Test enforced CSPs', () => {
   it('ConvertToString with single CSP', () => {

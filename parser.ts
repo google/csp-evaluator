@@ -16,15 +16,15 @@
  * @author lwe@google.com (Lukas Weichselbaum)
  */
 
-import * as csp from './csp';
-import * as enforcedCsps from './enforced_csps';
+import { Csp, isKeyword, isUrlScheme } from './csp';
+import { EnforcedCsps } from './enforced_csps';
 
 /**
  * A class to hold a parser for CSP in string format.
  * @unrestricted
  */
 export class CspParser {
-  csps: enforcedCsps.EnforcedCsps;
+  csps: EnforcedCsps;
 
   /**
    * @param unparsedCsp A Content Security Policy as string.
@@ -33,7 +33,7 @@ export class CspParser {
     /**
      * Parsed CSP
      */
-    this.csps = new enforcedCsps.EnforcedCsps();
+    this.csps = new EnforcedCsps();
 
     if (!Array.isArray(unparsedCsps)) {
       unparsedCsps = [ (unparsedCsps as string) ];
@@ -46,7 +46,7 @@ export class CspParser {
    * Parses a CSP from a string.
    * @param unparsedCsp CSP as string.
    */
-  parse(unparsedCspList: string[]): enforcedCsps.EnforcedCsps {
+  parse(unparsedCspList: string[]): EnforcedCsps {
     const splitCspList: string[] = [];
     unparsedCspList.forEach(policy => {
       // For each token returned by splitting list on commas:
@@ -63,8 +63,8 @@ export class CspParser {
     return this.csps;
   }
 
-  parseCsp(unparsedCsp: string): csp.Csp {
-    const retCsp: csp.Csp = new csp.Csp();
+  parseCsp(unparsedCsp: string): Csp {
+    const retCsp: Csp = new Csp();
 
     // For each token returned by strictly splitting serialized on the U+003B SEMICOLON character (;):
     const directiveTokens = unparsedCsp.split(';');
@@ -120,7 +120,7 @@ export class CspParser {
 function normalizeDirectiveValue(directiveValue: string): string {
   directiveValue = directiveValue.trim();
   const directiveValueLower = directiveValue.toLowerCase();
-  if (csp.isKeyword(directiveValueLower) || csp.isUrlScheme(directiveValue)) {
+  if (isKeyword(directiveValueLower) || isUrlScheme(directiveValue)) {
     return directiveValueLower;
   }
   return directiveValue;

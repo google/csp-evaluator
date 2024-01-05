@@ -18,7 +18,7 @@
  */
 
 
-import {Finding, Severity, Type} from './finding';
+import { Finding, Severity, Type } from './finding';
 
 /**
  * Content Security Policy object.

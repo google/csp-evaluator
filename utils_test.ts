@@ -18,7 +18,7 @@
 
 import 'jasmine';
 
-import {getHostname, getSchemeFreeUrl, matchWildcardUrls} from './utils';
+import { getHostname, getSchemeFreeUrl, matchWildcardUrls } from './utils';
 
 const TEST_BYPASSES = [
   'https://googletagmanager.com/gtm/js', 'https://www.google.com/jsapi',

@@ -18,11 +18,11 @@
  */
 
 
- import {Directive, Version} from '../csp';
- import {Finding, Severity, Type} from '../finding';
- import {CspParser} from '../parser';
+ import { Directive, Version } from '../csp';
+ import { Finding, Severity, Type } from '../finding';
+ import { CspParser } from '../parser';
  
- import {CheckerFunction} from './checker';
+ import { CheckerFunction } from './checker';
  import * as securityChecks from './security_checks';
  
  /**
