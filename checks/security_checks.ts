@@ -71,6 +71,34 @@ export function checkScriptUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
   return [];
 }
 
+/**
+ * Checks if passed csp allows web assembly eval in scripts.
+ * Findings of this check have a medium severity and are FP free.
+ *
+ * Example policy where this check would trigger:
+ *  script-src 'wasm-unsafe-eval'
+ *
+ * @param parsedCsp Parsed CSP.
+ */
+export function checkScriptWasmUnsafeEval(parsedCsps: EnforcedCsps): Finding[] {
+  const findings: Finding[] = [];
+
+  for (const cspChecked of parsedCsps) {
+    const directiveName = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
+    const values: string[] = cspChecked.directives[directiveName] || [];
+
+    // Check if wasm-unsafe-eval is present.
+    if (values.includes(Keyword.WASM_UNSAFE_EVAL)) {
+      findings.push(new Finding(
+          Type.SCRIPT_WASM_UNSAFE_EVAL,
+          `'wasm-unsafe-eval' allows the execution of web assembly code injected in functions ` +
+              'such as WebAssembly.compile().',
+          Severity.MEDIUM_MAYBE, directiveName, Keyword.UNSAFE_EVAL));
+    }
+  }
+
+  return findings;
+}
 
 /**
  * Checks if passed csp allows eval in scripts.

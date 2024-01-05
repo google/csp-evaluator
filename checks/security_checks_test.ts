@@ -72,6 +72,28 @@
      violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
      expect(violations.length).toBe(0);
    });
+
+    /** Tests for csp.securityChecks.checkScriptWasmUnsafeEval */
+    it('CheckScriptWasmUnsafeEvalInScriptSrc', () => {
+      const test = 'default-src https:; script-src \'wasm-unsafe-eval\'';
+  
+      const violations = checkCsp(test, securityChecks.checkScriptWasmUnsafeEval);
+      expect(violations.length).toBe(1);
+      expect(violations[0].severity).toBe(Severity.MEDIUM_MAYBE);
+      expect(violations[0].type).toBe(Type.SCRIPT_WASM_UNSAFE_EVAL);
+      expect(violations[0].directive).toBe('script-src');
+    });
+
+    /** Tests for csp.securityChecks.checkScriptWasmUnsafeEval */
+    it('CheckScriptWasmUnsafeEvalInDefaultSrc', () => {
+      const test = 'default-src \'wasm-unsafe-eval\'';
+
+      const violations = checkCsp(test, securityChecks.checkScriptWasmUnsafeEval);
+      expect(violations.length).toBe(1);
+      expect(violations[0].severity).toBe(Severity.MEDIUM_MAYBE);
+      expect(violations[0].type).toBe(Type.SCRIPT_WASM_UNSAFE_EVAL);
+      expect(violations[0].directive).toBe('default-src');
+    });
  
    /** Tests for csp.securityChecks.checkScriptUnsafeEval */
    it('CheckScriptUnsafeEvalInScriptSrc', () => {
