@@ -20,8 +20,7 @@ import { CheckerFunction } from './checks/checker';
 import * as parserChecks from './checks/parser_checks';
 import * as securityChecks from './checks/security_checks';
 import * as strictcspChecks from './checks/strictcsp_checks';
-import * as csp from './csp';
-import { Csp, Version } from './csp';
+import { Version } from './csp';
 import { EnforcedCsps } from './enforced_csps';
 import { Finding } from './finding';
 
@@ -49,7 +48,7 @@ export class CspEvaluator {
     /**
      * CSP version.
      */
-    this.version = cspVersion || csp.Version.CSP3;
+    this.version = cspVersion || Version.CSP3;
 
     /**
      * Parsed CSPs.

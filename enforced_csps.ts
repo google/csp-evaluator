@@ -44,7 +44,7 @@ export class EnforcedCsps extends Array<Csp> {
    * @return The list of CSP string.
    */
   convertToStrings(): string[] {
-    let retString: string[] = [];
+    const retString: string[] = [];
     
     for (const appliedCsp of this) {
         retString.push(appliedCsp.convertToString());

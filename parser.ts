@@ -19,8 +19,6 @@
 import * as csp from './csp';
 import * as enforcedCsps from './enforced_csps';
 
-
-
 /**
  * A class to hold a parser for CSP in string format.
  * @unrestricted
@@ -54,14 +52,6 @@ export class CspParser {
       // For each token returned by splitting list on commas:
       const policiesList: string[] = policy.split(',');
 
-      // Let policy be the result of parsing token, with a source of source, and disposition of disposition.
-      const filteredPoliciesList = policiesList.map(function (el, index) {
-        // If policy’s directive set is empty, continue.
-        if (el.trim() !== "") {
-          return el;
-        }
-      });
-
       // Append policy to policies.
       splitCspList.push(...policiesList);
     });
@@ -73,9 +63,8 @@ export class CspParser {
     return this.csps;
   }
 
-
   parseCsp(unparsedCsp: string): csp.Csp {
-    let retCsp: csp.Csp = new csp.Csp();
+    const retCsp: csp.Csp = new csp.Csp();
 
     // For each token returned by strictly splitting serialized on the U+003B SEMICOLON character (;):
     const directiveTokens = unparsedCsp.split(';');
@@ -84,9 +73,11 @@ export class CspParser {
       const directiveToken = directiveTokens[i].trim();
 
       // If token is an empty string, or if token is not an ASCII string, continue.
+      /* eslint-disable no-control-regex */
       if (directiveToken === "" || !/^[\x00-\xFF]*$/.test(directiveToken)) {
         continue;
       }
+      /* eslint-enable no-control-regex */
 
       // Let directive name be the result of collecting a sequence of code points from token which are not ASCII whitespace.
       // Let directive value be the result of splitting token on ASCII whitespace.
@@ -98,9 +89,6 @@ export class CspParser {
         // If policy’s directive set contains a directive whose name is directive name, continue.
         if (directiveName in retCsp.directives) {
           continue;
-        }
-
-        if (!csp.isDirective(directiveName)) {
         }
 
         const directiveValues: string[] = [];

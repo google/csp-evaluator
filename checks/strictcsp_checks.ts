@@ -26,11 +26,10 @@
  * limitations under the License.
  */
 
-import * as csp from '../csp';
-import {Csp, Keyword} from '../csp';
+import { Directive, Keyword, TrustedTypesSink } from '../csp';
 import { EnforcedCsps } from '../enforced_csps';
 
-import {Finding, Severity, Type} from '../finding';
+import { Finding, Severity, Type } from '../finding';
 
 
 /**
@@ -42,7 +41,7 @@ import {Finding, Severity, Type} from '../finding';
  * @param parsedCsp A parsed csp.
  */
 export function checkStrictDynamic(parsedCsps: EnforcedCsps): Finding[] {
-  const directiveName = parsedCsps.getEffectiveDirective(csp.Directive.SCRIPT_SRC);
+  const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
   for (const csp of parsedCsps) {
@@ -73,7 +72,7 @@ export function checkStrictDynamic(parsedCsps: EnforcedCsps): Finding[] {
  * @param parsedCsp A parsed csp.
  */
 export function checkStrictDynamicNotStandalone(parsedCsps: EnforcedCsps): Finding[] {
-  const directiveName = parsedCsps.getEffectiveDirective(csp.Directive.SCRIPT_SRC);
+  const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
   for (const csp of parsedCsps) {
@@ -109,7 +108,7 @@ export function checkUnsafeInlineFallback(parsedCsps: EnforcedCsps): Finding[] {
     return [];
   }
 
-  const directiveName = parsedCsps.getEffectiveDirective(csp.Directive.SCRIPT_SRC);
+  const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
   for (const csp of parsedCsps) {
@@ -140,7 +139,7 @@ export function checkUnsafeInlineFallback(parsedCsps: EnforcedCsps): Finding[] {
  * @param parsedCsp A parsed csp.
  */
 export function checkAllowlistFallback(parsedCsps: EnforcedCsps): Finding[] {
-  const directiveName = parsedCsps.getEffectiveDirective(csp.Directive.SCRIPT_SRC);
+  const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
   for (const csp of parsedCsps) {
@@ -177,10 +176,10 @@ export function checkAllowlistFallback(parsedCsps: EnforcedCsps): Finding[] {
 export function checkRequiresTrustedTypesForScripts(parsedCsps: EnforcedCsps): Finding[] {
 
   for (const cspChecked of parsedCsps) {
-    const directiveName = cspChecked.getEffectiveDirective(csp.Directive.REQUIRE_TRUSTED_TYPES_FOR);
+    const directiveName = cspChecked.getEffectiveDirective(Directive.REQUIRE_TRUSTED_TYPES_FOR);
     const values: string[] = cspChecked.directives[directiveName] || [];
 
-    if (values.includes(csp.TrustedTypesSink.SCRIPT)) {
+    if (values.includes(TrustedTypesSink.SCRIPT)) {
       return [];
     }
   }
@@ -190,5 +189,5 @@ export function checkRequiresTrustedTypesForScripts(parsedCsps: EnforcedCsps): F
       'Consider requiring Trusted Types for scripts to lock down DOM XSS ' +
           'injection sinks. You can do this by adding ' +
           '"require-trusted-types-for \'script\'" to your policy.',
-      Severity.INFO, csp.Directive.REQUIRE_TRUSTED_TYPES_FOR)];
+      Severity.INFO, Directive.REQUIRE_TRUSTED_TYPES_FOR)];
 }

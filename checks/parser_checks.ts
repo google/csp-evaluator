@@ -19,11 +19,10 @@
  * limitations under the License.
  */
 
-import * as csp from '../csp';
-import {Csp, Keyword} from '../csp';
+import { Directive, Keyword, TrustedTypesSink, isDirective, isHash, isKeyword, isNonce } from '../csp';
 import { EnforcedCsps } from '../enforced_csps';
 
-import {Finding, Severity, Type} from '../finding';
+import { Finding, Severity, Type } from '../finding';
 
 
 /**
@@ -39,7 +38,7 @@ export function checkUnknownDirective(parsedCsps: EnforcedCsps): Finding[] {
 
   for (const cspChecked of parsedCsps) {
     for (const directive of Object.keys(cspChecked.directives)) {
-      if (csp.isDirective(directive)) {
+      if (isDirective(directive)) {
         // Directive is known.
         continue;
       }
@@ -82,7 +81,7 @@ export function checkMissingSemicolon(parsedCsps: EnforcedCsps): Finding[] {
       for (const value of directiveValues) {
         // If we find a known directive inside a directive value, it is very
         // likely that a semicolon was forgoten.
-        if (csp.isDirective(value)) {
+        if (isDirective(value)) {
           findings.push(new Finding(
               Type.MISSING_SEMICOLON,
               'Did you forget the semicolon? ' +
@@ -134,19 +133,19 @@ export function checkInvalidKeyword(parsedCsps: EnforcedCsps): Finding[] {
           continue;
         }
 
-        if (directive === csp.Directive.REQUIRE_TRUSTED_TYPES_FOR) {
+        if (directive === Directive.REQUIRE_TRUSTED_TYPES_FOR) {
           // Continue, if it's an allowed Trusted Types sink.
-          if (value === csp.TrustedTypesSink.SCRIPT) {
+          if (value === TrustedTypesSink.SCRIPT) {
             continue;
           }
-        } else if (directive === csp.Directive.TRUSTED_TYPES) {
+        } else if (directive === Directive.TRUSTED_TYPES) {
           // Continue, if it's an allowed Trusted Types keyword.
           if (value === '\'allow-duplicates\'' || value === '\'none\'') {
             continue;
           }
         } else {
           // Continue, if it's a valid keyword.
-          if (csp.isKeyword(value) || csp.isHash(value) || csp.isNonce(value)) {
+          if (isKeyword(value) || isHash(value) || isNonce(value)) {
             continue;
           }
         }

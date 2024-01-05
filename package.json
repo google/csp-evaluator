@@ -18,10 +18,14 @@
     "url": "https://github.com/google/csp-evaluator"
   },
   "scripts": {
-    "test": "tsc && npx jasmine --config=jasmine.json"
+    "test": "tsc && npx jasmine --config=jasmine.json",
+    "lint": "eslint . --ext .ts"
   },
   "devDependencies": {
     "@types/jasmine": "^5.1.4",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
     "jasmine": "^5.1.0",
     "typescript": "^5.3.3"
   }

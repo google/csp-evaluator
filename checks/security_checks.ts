@@ -20,10 +20,9 @@
 import * as angular from '../allowlist_bypasses/angular';
 import * as flash from '../allowlist_bypasses/flash';
 import * as jsonp from '../allowlist_bypasses/jsonp';
-import * as csp from '../csp';
-import {Csp, Directive, Keyword} from '../csp';
+import { Directive, Keyword, isNonce, isUrlScheme } from '../csp';
 import { EnforcedCsps } from '../enforced_csps';
-import {Finding, Severity, Type} from '../finding';
+import { Finding, Severity, Type } from '../finding';
 import * as utils from '../utils';
 
 
@@ -301,7 +300,7 @@ export function checkScriptAllowlistBypass(parsedCsps: EnforcedCsps): Finding[] 
       }
 
       // Ignore standalone schemes and things that don't look like URLs (no dot).
-      if (csp.isUrlScheme(value) || value.indexOf('.') === -1) {
+      if (isUrlScheme(value) || value.indexOf('.') === -1) {
         continue;
       }
 
@@ -541,7 +540,7 @@ export function checkNonceLength(parsedCsps: EnforcedCsps): Finding[] {
                   directive, value));
             }
 
-            if (!csp.isNonce(value, true)) {
+            if (!isNonce(value, true)) {
               violations.push(new Finding(
                   Type.NONCE_CHARSET,
                   'Nonces should only use the base64 charset.', Severity.INFO,

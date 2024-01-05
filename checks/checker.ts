@@ -2,7 +2,6 @@
  * @fileoverview Shared interfaces for functions that check CSP policies.
  */
 
-import {Csp} from '../csp';
 import { EnforcedCsps } from '../enforced_csps';
 import {Finding} from '../finding';
 
