@@ -1,2 +1,4 @@
 dest/
 *.js
+dist
+node_modules
