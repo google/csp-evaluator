@@ -25,6 +25,5 @@
  * paths on these domains that would allow a bypass.
  */
 export const URLS: string[] = [
-  '//vk.com/swf/video.swf',
   '//ajax.googleapis.com/ajax/libs/yui/2.8.0r4/build/charts/assets/charts.swf'
 ];
