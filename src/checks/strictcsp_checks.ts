@@ -26,9 +26,8 @@
  * limitations under the License.
  */
 
-import { Csp, Directive, Keyword, TrustedTypesSink } from '../csp';
-import { Finding, Severity, Type } from '../finding';
-
+import {Csp, Directive, Keyword, TrustedTypesSink} from '../csp';
+import {Finding, Severity, Type} from '../finding';
 
 /**
  * Checks if 'strict-dynamic' is present.
@@ -44,22 +43,25 @@ export function checkStrictDynamic(parsedCsps: Csp): Finding[] {
 
   for (const currentCsp of parsedCsps.directives) {
     const values: string[] = currentCsp[directiveName] || [];
-  
-    const schemeOrHostPresent = values.some((v) => !v.startsWith('\''));
-  
+
+    const schemeOrHostPresent = values.some(v => !v.startsWith("'"));
+
     // Check if strict-dynamic is present in case a host/scheme allowlist is used.
     if (schemeOrHostPresent && !values.includes(Keyword.STRICT_DYNAMIC)) {
-      findings.push(new Finding(
+      findings.push(
+        new Finding(
           Type.STRICT_DYNAMIC,
           'Host allowlists can frequently be bypassed. Consider using ' +
-              '\'strict-dynamic\' in combination with CSP nonces or hashes.',
-          Severity.STRICT_CSP, directiveName));
+            "'strict-dynamic' in combination with CSP nonces or hashes.",
+          Severity.STRICT_CSP,
+          directiveName
+        )
+      );
     }
   }
 
   return findings;
 }
-
 
 /**
  * Checks if 'strict-dynamic' is only used together with a nonce or a hash.
@@ -71,24 +73,24 @@ export function checkStrictDynamic(parsedCsps: Csp): Finding[] {
  */
 export function checkStrictDynamicNotStandalone(parsedCsps: Csp): Finding[] {
   const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
-  const findings: Finding[] = [];
 
-  for (const currentCsp of parsedCsps.directives) {
-    const values: string[] = currentCsp[directiveName] || [];
-
-    if (values.includes(Keyword.STRICT_DYNAMIC) &&
-        (!parsedCsps.policyHasScriptNonces() &&
-        !parsedCsps.policyHasScriptHashes())) {
-      findings.push(new Finding(
-          Type.STRICT_DYNAMIC_NOT_STANDALONE,
-          '\'strict-dynamic\' without a CSP nonce/hash will block all scripts.',
-          Severity.INFO, directiveName));
-    }
+  if (
+    parsedCsps.policyHasStrictDynamic() &&
+    !parsedCsps.policyHasScriptNonces() &&
+    !parsedCsps.policyHasScriptHashes()
+  ) {
+    return [
+      new Finding(
+        Type.STRICT_DYNAMIC_NOT_STANDALONE,
+        "'strict-dynamic' without a CSP nonce/hash will block all scripts.",
+        Severity.INFO,
+        directiveName
+      ),
+    ];
   }
 
-  return findings;
+  return [];
 }
-
 
 /**
  * Checks if the policy has 'unsafe-inline' when a nonce or hash are present.
@@ -101,8 +103,10 @@ export function checkStrictDynamicNotStandalone(parsedCsps: Csp): Finding[] {
  * @param parsedCsp A parsed csp.
  */
 export function checkUnsafeInlineFallback(parsedCsps: Csp): Finding[] {
-  if (!parsedCsps.policyHasScriptNonces() &&
-      !parsedCsps.policyHasScriptHashes()) {
+  if (
+    !parsedCsps.policyHasScriptNonces() &&
+    !parsedCsps.policyHasScriptHashes()
+  ) {
     return [];
   }
 
@@ -113,17 +117,20 @@ export function checkUnsafeInlineFallback(parsedCsps: Csp): Finding[] {
     const values: string[] = currentCsp[directiveName] || [];
 
     if (!values.includes(Keyword.UNSAFE_INLINE)) {
-      findings.push(new Finding(
+      findings.push(
+        new Finding(
           Type.UNSAFE_INLINE_FALLBACK,
-          'Consider adding \'unsafe-inline\' (ignored by browsers supporting ' +
-              'nonces/hashes) to be backward compatible with older browsers.',
-          Severity.STRICT_CSP, directiveName));
+          "Consider adding 'unsafe-inline' (ignored by browsers supporting " +
+            'nonces/hashes) to be backward compatible with older browsers.',
+          Severity.STRICT_CSP,
+          directiveName
+        )
+      );
     }
   }
 
   return findings;
 }
-
 
 /**
  * Checks if the policy has an allowlist fallback (* or http: and https:) when
@@ -148,20 +155,24 @@ export function checkAllowlistFallback(parsedCsps: Csp): Finding[] {
     }
 
     // Check if there's already an allowlist (url scheme or url)
-    if (!values.some(
-            (v) => ['http:', 'https:', '*'].includes(v) || v.includes('.'))) {
-      findings.push(new Finding(
+    if (
+      !values.some(v => ['http:', 'https:', '*'].includes(v) || v.includes('.'))
+    ) {
+      findings.push(
+        new Finding(
           Type.ALLOWLIST_FALLBACK,
           'Consider adding https: and http: url schemes (ignored by browsers ' +
-              'supporting \'strict-dynamic\') to be backward compatible with older ' +
-              'browsers.',
-          Severity.STRICT_CSP, directiveName));
+            "supporting 'strict-dynamic') to be backward compatible with older " +
+            'browsers.',
+          Severity.STRICT_CSP,
+          directiveName
+        )
+      );
     }
   }
 
   return findings;
 }
-
 
 /**
  * Checks if the policy requires Trusted Types for scripts.
@@ -171,8 +182,12 @@ export function checkAllowlistFallback(parsedCsps: Csp): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkRequiresTrustedTypesForScripts(parsedCsps: Csp): Finding[] {
-  const directiveName = parsedCsps.getEffectiveDirective(Directive.REQUIRE_TRUSTED_TYPES_FOR);
+export function checkRequiresTrustedTypesForScripts(
+  parsedCsps: Csp
+): Finding[] {
+  const directiveName = parsedCsps.getEffectiveDirective(
+    Directive.REQUIRE_TRUSTED_TYPES_FOR
+  );
   for (const cspChecked of parsedCsps.directives) {
     const values: string[] = cspChecked[directiveName] || [];
 
@@ -181,10 +196,14 @@ export function checkRequiresTrustedTypesForScripts(parsedCsps: Csp): Finding[] 
     }
   }
 
-  return [new Finding(
+  return [
+    new Finding(
       Type.REQUIRE_TRUSTED_TYPES_FOR_SCRIPTS,
       'Consider requiring Trusted Types for scripts to lock down DOM XSS ' +
-          'injection sinks. You can do this by adding ' +
-          '"require-trusted-types-for \'script\'" to your policy.',
-      Severity.INFO, Directive.REQUIRE_TRUSTED_TYPES_FOR)];
+        'injection sinks. You can do this by adding ' +
+        '"require-trusted-types-for \'script\'" to your policy.',
+      Severity.INFO,
+      Directive.REQUIRE_TRUSTED_TYPES_FOR
+    ),
+  ];
 }

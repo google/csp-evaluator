@@ -3,13 +3,30 @@
  * stricter subset of the other checks defined in this project.
  */
 
-import { CheckerFunction } from '../checks/checker';
-import { checkInvalidKeyword, checkMissingSemicolon, checkUnknownDirective } from '../checks/parser_checks';
-import { checkDeprecatedDirective, checkMissingBaseUriDirective, checkMissingObjectSrcDirective, checkMissingScriptSrcDirective, checkNonceLength, checkPlainUrlSchemes, checkScriptUnsafeInline, checkWildcards } from '../checks/security_checks';
-import { checkAllowlistFallback, checkStrictDynamic, checkUnsafeInlineFallback } from '../checks/strictcsp_checks';
-import { Csp, Directive, Version } from '../csp';
-import { Finding } from '../finding';
-import { CspParser } from '../parser';
+import {CheckerFunction} from '../checks/checker';
+import {
+  checkInvalidKeyword,
+  checkMissingSemicolon,
+  checkUnknownDirective,
+} from '../checks/parser_checks';
+import {
+  checkDeprecatedDirective,
+  checkMissingBaseUriDirective,
+  checkMissingObjectSrcDirective,
+  checkMissingScriptSrcDirective,
+  checkNonceLength,
+  checkPlainUrlSchemes,
+  checkScriptUnsafeInline,
+  checkWildcards,
+} from '../checks/security_checks';
+import {
+  checkAllowlistFallback,
+  checkStrictDynamic,
+  checkUnsafeInlineFallback,
+} from '../checks/strictcsp_checks';
+import {Csp, Directive, Version} from '../csp';
+import {Finding} from '../finding';
+import {CspParser} from '../parser';
 
 interface Equalable {
   equals(a: unknown): boolean;
@@ -59,7 +76,9 @@ function setUnion<T extends Equalable>(sets: T[][]): T[] {
  * first one that had any findings.
  */
 function atLeastOnePasses(
-    parsedCsps: Csp[], checker: CheckerFunction): Finding[] {
+  parsedCsps: Csp[],
+  checker: CheckerFunction
+): Finding[] {
   const findings: Finding[][] = [];
   for (const parsedCsp of parsedCsps) {
     findings.push(checker(parsedCsp));
@@ -72,7 +91,9 @@ function atLeastOnePasses(
  * list of findings from the one that had the most findings.
  */
 function atLeastOneFails(
-    parsedCsps: Csp[], checker: CheckerFunction): Finding[] {
+  parsedCsps: Csp[],
+  checker: CheckerFunction
+): Finding[] {
   const findings: Finding[][] = [];
   for (const parsedCsp of parsedCsps) {
     findings.push(checker(parsedCsp));
@@ -89,7 +110,7 @@ export function evaluateForFailure(parsedCsps: Csp[]): Finding[] {
   for (const csp of parsedCsps) {
     mergedCspString.push(csp.convertToString());
   }
-  const mergedCsp: Csp = (new CspParser(mergedCspString)).csp;
+  const mergedCsp: Csp = new CspParser(mergedCspString).csp;
 
   // Check #1
   const targetsXssFindings = [
@@ -99,12 +120,15 @@ export function evaluateForFailure(parsedCsps: Csp[]): Finding[] {
   ];
 
   // Check #2
-  const effectiveCsps = parsedCsps.map(csp => csp.getEffectiveCsp(Version.CSP3));
+  const effectiveCsps = parsedCsps.map(csp =>
+    csp.getEffectiveCsp(Version.CSP3)
+  );
   const effectiveCspsWithScript = effectiveCsps.filter(csp => {
     const directiveName = csp.getEffectiveDirective(Directive.SCRIPT_SRC);
     for (const currentCsp of csp.directives) {
-        return currentCsp[directiveName];
+      return currentCsp[directiveName];
     }
+    return false;
   });
   const robust = [
     ...atLeastOnePasses(effectiveCspsWithScript, checkStrictDynamic),
@@ -127,7 +151,7 @@ export function evaluateForWarnings(parsedCsps: Csp[]): Finding[] {
   // Check #3
   return [
     ...atLeastOneFails(parsedCsps, checkUnsafeInlineFallback),
-    ...atLeastOneFails(parsedCsps, checkAllowlistFallback)
+    ...atLeastOneFails(parsedCsps, checkAllowlistFallback),
   ];
 }
 
@@ -141,9 +165,11 @@ export function evaluateForSyntaxErrors(parsedCsps: Csp[]): Finding[][] {
   const allFindings: Finding[][] = [];
   for (const csp of parsedCsps) {
     const findings = [
-      ...checkNonceLength(csp), ...checkUnknownDirective(csp),
-      ...checkDeprecatedDirective(csp), ...checkMissingSemicolon(csp),
-      ...checkInvalidKeyword(csp)
+      ...checkNonceLength(csp),
+      ...checkUnknownDirective(csp),
+      ...checkDeprecatedDirective(csp),
+      ...checkMissingSemicolon(csp),
+      ...checkInvalidKeyword(csp),
     ];
     allFindings.push(findings);
   }

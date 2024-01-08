@@ -17,11 +17,11 @@
  * @author lwe@google.com (Lukas Weichselbaum)
  */
 
-import { Finding, Severity } from '../finding';
-import { CspParser } from '../parser';
+import { Finding, Severity } from '../../src/finding';
+import { CspParser } from '../../src/parser';
 
-import { CheckerFunction } from './checker';
-import * as strictcspChecks from './strictcsp_checks';
+import { CheckerFunction } from '../../src/checks/checker';
+import * as strictcspChecks from '../../src/checks/strictcsp_checks';
 
 
 /**
@@ -49,8 +49,7 @@ describe('Test strictcsp checks', () => {
   it('CheckStrictDynamicNotStandalone', () => {
     const test = 'script-src \'strict-dynamic\'';
 
-    const violations =
-        checkCsp(test, strictcspChecks.checkStrictDynamicNotStandalone);
+    const violations = checkCsp(test, strictcspChecks.checkStrictDynamicNotStandalone);
     expect(violations[0].severity).toBe(Severity.INFO);
   });
 
@@ -58,7 +57,7 @@ describe('Test strictcsp checks', () => {
     const test = 'script-src \'strict-dynamic\' \'nonce-foobar\'';
 
     const violations =
-        checkCsp(test, strictcspChecks.checkStrictDynamicNotStandalone);
+      checkCsp(test, strictcspChecks.checkStrictDynamicNotStandalone);
     expect(violations.length).toBe(0);
   });
 
@@ -67,7 +66,7 @@ describe('Test strictcsp checks', () => {
     const test = 'script-src \'nonce-test\'';
 
     const violations =
-        checkCsp(test, strictcspChecks.checkUnsafeInlineFallback);
+      checkCsp(test, strictcspChecks.checkUnsafeInlineFallback);
     expect(violations.length).toBe(1);
     expect(violations[0].severity).toBe(Severity.STRICT_CSP);
   });
@@ -76,7 +75,7 @@ describe('Test strictcsp checks', () => {
     const test = 'script-src \'nonce-test\' \'unsafe-inline\'';
 
     const violations =
-        checkCsp(test, strictcspChecks.checkUnsafeInlineFallback);
+      checkCsp(test, strictcspChecks.checkUnsafeInlineFallback);
     expect(violations.length).toBe(0);
   });
 

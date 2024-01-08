@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-
-import { Finding, Severity, Type } from './finding';
+import {Finding, Severity, Type} from './finding';
 
 /**
  * Content Security Policy object.
@@ -27,7 +26,7 @@ import { Finding, Severity, Type } from './finding';
  *  - https://www.w3.org/TR/upgrade-insecure-requests/
  */
 export class Csp {
-  directives: Record<string, string[]|undefined>[] = [];
+  directives: Record<string, string[] | undefined>[] = [];
 
   /**
    * Clones a CSP object.
@@ -36,15 +35,17 @@ export class Csp {
   clone(): Csp {
     const clone = new Csp();
     for (const currentDirective of this.directives) {
-        const directiveClone: Record<string, string[]|undefined> = {};
+      const directiveClone: Record<string, string[] | undefined> = {};
 
-        for (const [directiveName, directiveValues] of Object.entries(currentDirective)) {
-          if (directiveValues) {
-            directiveClone[directiveName] = [...directiveValues];
-          }
+      for (const [directiveName, directiveValues] of Object.entries(
+        currentDirective
+      )) {
+        if (directiveValues) {
+          directiveClone[directiveName] = [...directiveValues];
         }
+      }
 
-        clone.directives.push(directiveClone);
+      clone.directives.push(directiveClone);
     }
 
     return clone;
@@ -58,19 +59,21 @@ export class Csp {
     const cspStrings: string[] = [];
 
     for (const currentDirective of this.directives) {
-        let cspString: string = '';
-        for (const [directive, directiveValues] of Object.entries(currentDirective)) {
-            cspString += directive;
-            if (directiveValues !== undefined) {
-                for (let value, i = 0; (value = directiveValues[i]); i++) {
-                cspString += ' ';
-                cspString += value;
-                }
-            }
-            cspString += '; ';
+      let cspString: string = '';
+      for (const [directive, directiveValues] of Object.entries(
+        currentDirective
+      )) {
+        cspString += directive;
+        if (directiveValues !== undefined) {
+          for (let value, i = 0; (value = directiveValues[i]); i++) {
+            cspString += ' ';
+            cspString += value;
+          }
         }
+        cspString += '; ';
+      }
 
-        cspStrings.push(cspString.trim());
+      cspStrings.push(cspString.trim());
     }
 
     return cspStrings.join(', ');
@@ -90,64 +93,81 @@ export class Csp {
     const directive = effectiveCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
 
     for (let index = 0; index < effectiveCsp.directives.length; index++) {
-        const values = this.directives[index][directive] || [];
-        const effectiveCspValues = effectiveCsp.directives[index][directive];
+      const values = this.directives[index][directive] || [];
+      const effectiveCspValues = effectiveCsp.directives[index][directive];
 
-        if (effectiveCspValues &&
-            (effectiveCsp.policyHasScriptNonces() ||
-            effectiveCsp.policyHasScriptHashes())) {
-            if (cspVersion >= Version.CSP2) {
-                // Ignore 'unsafe-inline' in CSP >= v2, if a nonce or a hash is present.
-                if (values.includes(Keyword.UNSAFE_INLINE)) {
-                    arrayRemove(effectiveCspValues, Keyword.UNSAFE_INLINE);
-                    findings.push(new Finding(
-                        Type.IGNORED,
-                        'unsafe-inline is ignored if a nonce or a hash is present. ' +
-                            '(CSP2 and above)',
-                        Severity.NONE, directive, Keyword.UNSAFE_INLINE));
-                }
-            } else {
-                // remove nonces and hashes (not supported in CSP < v2).
-                for (const value of values) {
-                    if (value.startsWith('\'nonce-') || value.startsWith('\'sha')) {
-                        arrayRemove(effectiveCspValues, value);
-                    }
-                }
+      if (
+        effectiveCspValues &&
+        (effectiveCsp.policyHasScriptNonces() ||
+          effectiveCsp.policyHasScriptHashes())
+      ) {
+        if (cspVersion >= Version.CSP2) {
+          // Ignore 'unsafe-inline' in CSP >= v2, if a nonce or a hash is present.
+          if (values.includes(Keyword.UNSAFE_INLINE)) {
+            arrayRemove(effectiveCspValues, Keyword.UNSAFE_INLINE);
+            findings.push(
+              new Finding(
+                Type.IGNORED,
+                'unsafe-inline is ignored if a nonce or a hash is present. ' +
+                  '(CSP2 and above)',
+                Severity.NONE,
+                directive,
+                Keyword.UNSAFE_INLINE
+              )
+            );
+          }
+        } else {
+          // remove nonces and hashes (not supported in CSP < v2).
+          for (const value of values) {
+            if (value.startsWith("'nonce-") || value.startsWith("'sha")) {
+              arrayRemove(effectiveCspValues, value);
             }
+          }
         }
+      }
 
-        if (effectiveCspValues && this.policyHasStrictDynamic()) {
-            // Ignore allowlist in CSP >= v3 in presence of 'strict-dynamic'.
-            if (cspVersion >= Version.CSP3) {
-                for (const value of values) {
-                // Because of 'strict-dynamic' all host-source and scheme-source
-                // expressions, as well as the "'unsafe-inline'" and "'self'
-                // keyword-sources will be ignored.
-                // https://w3c.github.io/webappsec-csp/#strict-dynamic-usage
-                if (!value.startsWith('\'') || value === Keyword.SELF ||
-                    value === Keyword.UNSAFE_INLINE) {
-                    arrayRemove(effectiveCspValues, value);
-                    findings.push(new Finding(
-                        Type.IGNORED,
-                        'Because of strict-dynamic this entry is ignored in CSP3 and above',
-                        Severity.NONE, directive, value));
-                }
-                }
-            } else {
-                // strict-dynamic not supported.
-                arrayRemove(effectiveCspValues, Keyword.STRICT_DYNAMIC);
+      if (effectiveCspValues && this.policyHasStrictDynamic()) {
+        // Ignore allowlist in CSP >= v3 in presence of 'strict-dynamic'.
+        if (cspVersion >= Version.CSP3) {
+          for (const value of values) {
+            // Because of 'strict-dynamic' all host-source and scheme-source
+            // expressions, as well as the "'unsafe-inline'" and "'self'
+            // keyword-sources will be ignored.
+            // https://w3c.github.io/webappsec-csp/#strict-dynamic-usage
+            if (
+              !value.startsWith("'") ||
+              value === Keyword.SELF ||
+              value === Keyword.UNSAFE_INLINE
+            ) {
+              arrayRemove(effectiveCspValues, value);
+              findings.push(
+                new Finding(
+                  Type.IGNORED,
+                  'Because of strict-dynamic this entry is ignored in CSP3 and above',
+                  Severity.NONE,
+                  directive,
+                  value
+                )
+              );
             }
+          }
+        } else {
+          // strict-dynamic not supported.
+          arrayRemove(effectiveCspValues, Keyword.STRICT_DYNAMIC);
         }
+      }
 
-        if (cspVersion < Version.CSP3) {
-            // Remove CSP3 directives from pre-CSP3 policies.
-            // https://w3c.github.io/webappsec-csp/#changes-from-level-2
-            delete effectiveCsp.directives[index][Directive.REPORT_TO];
-            delete effectiveCsp.directives[index][Directive.WORKER_SRC];
-            delete effectiveCsp.directives[index][Directive.MANIFEST_SRC];
-            delete effectiveCsp.directives[index][Directive.TRUSTED_TYPES];
-            delete effectiveCsp.directives[index][Directive.REQUIRE_TRUSTED_TYPES_FOR];
-        }
+      if (cspVersion < Version.CSP3) {
+        // Remove CSP3 directives from pre-CSP3 policies.
+        // https://w3c.github.io/webappsec-csp/#changes-from-level-2
+        delete effectiveCsp.directives[index][Directive.REPORT_TO];
+        delete effectiveCsp.directives[index][Directive.WORKER_SRC];
+        delete effectiveCsp.directives[index][Directive.MANIFEST_SRC];
+        delete effectiveCsp.directives[index][Directive.TRUSTED_TYPES];
+        delete effectiveCsp.directives[index][
+          Directive.REQUIRE_TRUSTED_TYPES_FOR
+        ];
+      }
     }
 
     return effectiveCsp;
@@ -162,14 +182,14 @@ export class Csp {
   getEffectiveDirective(directive: string): string {
     // Directive doesn't default to default-src
     if (!FETCH_DIRECTIVES.includes(directive as Directive)) {
-        return directive;
+      return directive;
     }
 
     // Look in each CSP to find the directive
     for (const currentCsp of this.directives) {
-        if (directive in currentCsp) {
-          return directive;
-        }
+      if (directive in currentCsp) {
+        return directive;
+      }
     }
 
     return Directive.DEFAULT_SRC;
@@ -182,8 +202,9 @@ export class Csp {
    * @return The effective directives.
    */
   getEffectiveDirectives(directives: string[]): string[] {
-    const effectiveDirectives =
-        new Set(directives.map((val) => this.getEffectiveDirective(val)));
+    const effectiveDirectives = new Set(
+      directives.map(val => this.getEffectiveDirective(val))
+    );
     return [...effectiveDirectives];
   }
 
@@ -194,11 +215,11 @@ export class Csp {
   policyHasScriptNonces(): boolean {
     const directiveName = this.getEffectiveDirective(Directive.SCRIPT_SRC);
 
-    for (const currentDirective of this.directives)  {
-        const values = currentDirective[directiveName] || [];
-        if (values.some((val) => isNonce(val))) {
-            return true;
-        }
+    for (const currentDirective of this.directives) {
+      const values = currentDirective[directiveName] || [];
+      if (values.some(val => isNonce(val))) {
+        return true;
+      }
     }
 
     return false;
@@ -211,11 +232,11 @@ export class Csp {
   policyHasScriptHashes(): boolean {
     const directiveName = this.getEffectiveDirective(Directive.SCRIPT_SRC);
 
-    for (const currentDirective of this.directives)  {
-        const values = currentDirective[directiveName] || [];
-        if (values.some((val) => isHash(val))) {
-            return true;
-        }
+    for (const currentDirective of this.directives) {
+      const values = currentDirective[directiveName] || [];
+      if (values.some(val => isHash(val))) {
+        return true;
+      }
     }
 
     return false;
@@ -228,44 +249,41 @@ export class Csp {
   policyHasStrictDynamic(): boolean {
     const directiveName = this.getEffectiveDirective(Directive.SCRIPT_SRC);
 
-    for (const currentDirective of this.directives)  {
-        const values = currentDirective[directiveName] || [];
-        if (values.includes(Keyword.STRICT_DYNAMIC)) {
-            return true;
-        }
+    for (const currentDirective of this.directives) {
+      const values = currentDirective[directiveName] || [];
+      if (values.includes(Keyword.STRICT_DYNAMIC)) {
+        return true;
+      }
     }
 
     return false;
   }
 }
 
-
 /**
  * CSP directive source keywords.
  */
 export enum Keyword {
-  SELF = '\'self\'',
-  NONE = '\'none\'',
-  UNSAFE_INLINE = '\'unsafe-inline\'',
-  UNSAFE_EVAL = '\'unsafe-eval\'',
-  WASM_EVAL = '\'wasm-eval\'',
-  WASM_UNSAFE_EVAL = '\'wasm-unsafe-eval\'',
-  STRICT_DYNAMIC = '\'strict-dynamic\'',
-  UNSAFE_HASHED_ATTRIBUTES = '\'unsafe-hashed-attributes\'',
-  UNSAFE_HASHES = '\'unsafe-hashes\'',
-  REPORT_SAMPLE = '\'report-sample\'',
-  BLOCK = '\'block\'',
-  ALLOW = '\'allow\'',
+  SELF = "'self'",
+  NONE = "'none'",
+  UNSAFE_INLINE = "'unsafe-inline'",
+  UNSAFE_EVAL = "'unsafe-eval'",
+  WASM_EVAL = "'wasm-eval'",
+  WASM_UNSAFE_EVAL = "'wasm-unsafe-eval'",
+  STRICT_DYNAMIC = "'strict-dynamic'",
+  UNSAFE_HASHED_ATTRIBUTES = "'unsafe-hashed-attributes'",
+  UNSAFE_HASHES = "'unsafe-hashes'",
+  REPORT_SAMPLE = "'report-sample'",
+  BLOCK = "'block'",
+  ALLOW = "'allow'",
 }
-
 
 /**
  * CSP directive source keywords.
  */
 export enum TrustedTypesSink {
-  SCRIPT = '\'script\'',
+  SCRIPT = "'script'",
 }
-
 
 /**
  * CSP v3 directives.
@@ -329,12 +347,22 @@ export enum Directive {
  *
  */
 export const FETCH_DIRECTIVES: Directive[] = [
-  Directive.CHILD_SRC, Directive.CONNECT_SRC, Directive.DEFAULT_SRC,
-  Directive.FONT_SRC, Directive.FRAME_SRC, Directive.IMG_SRC,
-  Directive.MANIFEST_SRC, Directive.MEDIA_SRC, Directive.OBJECT_SRC,
-  Directive.SCRIPT_SRC, Directive.SCRIPT_SRC_ATTR, Directive.SCRIPT_SRC_ELEM,
-  Directive.STYLE_SRC, Directive.STYLE_SRC_ATTR, Directive.STYLE_SRC_ELEM,
-  Directive.WORKER_SRC
+  Directive.CHILD_SRC,
+  Directive.CONNECT_SRC,
+  Directive.DEFAULT_SRC,
+  Directive.FONT_SRC,
+  Directive.FRAME_SRC,
+  Directive.IMG_SRC,
+  Directive.MANIFEST_SRC,
+  Directive.MEDIA_SRC,
+  Directive.OBJECT_SRC,
+  Directive.SCRIPT_SRC,
+  Directive.SCRIPT_SRC_ATTR,
+  Directive.SCRIPT_SRC_ELEM,
+  Directive.STYLE_SRC,
+  Directive.STYLE_SRC_ATTR,
+  Directive.STYLE_SRC_ELEM,
+  Directive.WORKER_SRC,
 ];
 
 /**
@@ -343,9 +371,8 @@ export const FETCH_DIRECTIVES: Directive[] = [
 export enum Version {
   CSP1 = 1,
   CSP2,
-  CSP3
+  CSP3,
 }
-
 
 /**
  * Checks if a string is a valid CSP directive.
@@ -356,7 +383,6 @@ export function isDirective(directive: string): boolean {
   return Object.values(Directive).includes(directive as Directive);
 }
 
-
 /**
  * Checks if a string is a valid CSP keyword.
  * @param keyword value to check.
@@ -365,7 +391,6 @@ export function isDirective(directive: string): boolean {
 export function isKeyword(keyword: string): boolean {
   return Object.values(Keyword).includes(keyword as Keyword);
 }
-
 
 /**
  * Checks if a string is a valid URL scheme.
@@ -379,17 +404,15 @@ export function isUrlScheme(urlScheme: string): boolean {
   return pattern.test(urlScheme);
 }
 
-
 /**
  * A regex pattern to check nonce prefix and Base64 formatting of a nonce value.
  */
-export const STRICT_NONCE_PATTERN =
-    new RegExp('^\'nonce-[a-zA-Z0-9+/_-]+[=]{0,2}\'$');
-
+export const STRICT_NONCE_PATTERN = new RegExp(
+  "^'nonce-[a-zA-Z0-9+/_-]+[=]{0,2}'$"
+);
 
 /** A regex pattern for checking if nonce prefix. */
-export const NONCE_PATTERN = new RegExp('^\'nonce-(.+)\'$');
-
+export const NONCE_PATTERN = new RegExp("^'nonce-(.+)'$");
 
 /**
  * Checks if a string is a valid CSP nonce.
@@ -403,17 +426,15 @@ export function isNonce(nonce: string, strictCheck?: boolean): boolean {
   return pattern.test(nonce);
 }
 
-
 /**
  * A regex pattern to check hash prefix and Base64 formatting of a hash value.
  */
-export const STRICT_HASH_PATTERN =
-    new RegExp('^\'(sha256|sha384|sha512)-[a-zA-Z0-9+/]+[=]{0,2}\'$');
-
+export const STRICT_HASH_PATTERN = new RegExp(
+  "^'(sha256|sha384|sha512)-[a-zA-Z0-9+/]+[=]{0,2}'$"
+);
 
 /** A regex pattern to check hash prefix. */
-export const HASH_PATTERN = new RegExp('^\'(sha256|sha384|sha512)-(.+)\'$');
-
+export const HASH_PATTERN = new RegExp("^'(sha256|sha384|sha512)-(.+)'$");
 
 /**
  * Checks if a string is a valid CSP hash.
@@ -426,7 +447,6 @@ export function isHash(hash: string, strictCheck?: boolean): boolean {
   const pattern = strictCheck ? STRICT_HASH_PATTERN : HASH_PATTERN;
   return pattern.test(hash);
 }
-
 
 /**
  * Class to represent all generic CSP errors.

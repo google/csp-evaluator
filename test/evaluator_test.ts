@@ -19,9 +19,9 @@
 
 import 'jasmine';
 
-import { CspEvaluator } from './evaluator';
-import { Finding, Severity, Type } from './finding';
-import { Csp } from './csp';
+import { CspEvaluator } from '../src/evaluator';
+import { Finding, Severity, Type } from '../src/finding';
+import { Csp } from '../src/csp';
 
 describe('Test evaluator', () => {
   it('CspEvaluator', () => {

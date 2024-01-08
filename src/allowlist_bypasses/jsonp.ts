@@ -23,18 +23,17 @@
  * limitations under the License.
  */
 
-
 /**
  * Some JSONP-like bypasses only work if the CSP allows 'eval()'.
  */
 export const NEEDS_EVAL: string[] = [
-  'googletagmanager.com', 'www.googletagmanager.com',
-
-  'www.googleadservices.com', 'google-analytics.com',
-  'ssl.google-analytics.com', 'www.google-analytics.com'
+  'googletagmanager.com',
+  'www.googletagmanager.com',
+  'www.googleadservices.com',
+  'google-analytics.com',
+  'ssl.google-analytics.com',
+  'www.google-analytics.com',
 ];
-
-
 
 /**
  * JSONP endpoints on commonly allowlisted origins (e.g. CDNs) that would allow
@@ -162,5 +161,5 @@ export const URLS: string[] = [
   '//maps.google.ru/maps/vt',
   '//c1n2.hypercomments.com/stream/subscribe',
   '//rec.ydf.yandex.ru/cookie',
-  '//cdn.jsdelivr.net'
+  '//cdn.jsdelivr.net',
 ];

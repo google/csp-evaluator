@@ -19,8 +19,8 @@
 
 import 'jasmine';
 
-import { Directive, isDirective, isHash, isKeyword, isNonce, isUrlScheme, Keyword, Version } from './csp';
-import { CspParser } from './parser';
+import { Directive, isDirective, isHash, isKeyword, isNonce, isUrlScheme, Keyword, Version } from '../src/csp';
+import { CspParser } from '../src/parser';
 
 describe('Test Csp', () => {
   it('ConvertToString', () => {

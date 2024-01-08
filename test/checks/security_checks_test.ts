@@ -18,12 +18,12 @@
  */
 
 
- import { Directive, Version } from '../csp';
- import { Finding, Severity, Type } from '../finding';
- import { CspParser } from '../parser';
+ import { Directive, Version } from '../../src/csp';
+ import { Finding, Severity, Type } from '../../src/finding';
+ import { CspParser } from '../../src/parser';
  
- import { CheckerFunction } from './checker';
- import * as securityChecks from './security_checks';
+ import { CheckerFunction } from '../../src/checks/checker';
+ import * as securityChecks from '../../src/checks/security_checks';
  
  /**
   * Helper function for running a check on a CSP string.

@@ -2,7 +2,7 @@
   "name": "csp_evaluator",
   "version": "2.0.0",
   "description": "Evaluate Content Security Policies for a wide range of bypasses and weaknesses",
-  "main": "dist/evaluator.js",
+  "main": "build/evaluator.js",
   "keywords": [
     "csp",
     "content security policy",
@@ -16,6 +16,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/google/csp-evaluator"
+  },
+  "engines": {
+    "node": ">=10.0.0"
   },
   "scripts": {
     "test": "tsc && npx jasmine --config=jasmine.json",

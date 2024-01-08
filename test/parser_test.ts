@@ -19,7 +19,7 @@
 
 import 'jasmine';
 
-import {CspParser, TEST_ONLY} from './parser';
+import {CspParser, TEST_ONLY} from '../src/parser';
 
 
 describe('Test parser', () => {
@@ -160,7 +160,7 @@ describe('Test parser', () => {
     const expectedDirectives2 = [
       'connect-src', 'script-src'
     ];
-    
+
     expect(expectedDirectives1).toEqual(jasmine.arrayWithExactContents(directives1));
     expect(expectedDirectives2).toEqual(jasmine.arrayWithExactContents(directives2));
 

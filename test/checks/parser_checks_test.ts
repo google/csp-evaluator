@@ -19,11 +19,11 @@
 
 import 'jasmine';
 
-import { Finding, Severity } from '../finding';
-import { CspParser } from '../parser'; 
+import { Finding, Severity } from '../../src/finding';
+import { CspParser } from '../../src/parser'; 
 
-import { CheckerFunction } from './checker';
-import * as parserChecks from './parser_checks';
+import { CheckerFunction } from '../../src/checks/checker';
+import * as parserChecks from '../../src/checks/parser_checks';
 
 /**
  * Runs a check on a CSP string.

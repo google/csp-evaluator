@@ -16,7 +16,6 @@
  * @author lwe@google.com (Lukas Weichselbaum)
  */
 
-
 /**
  * A CSP Finding is returned by a CSP check and can either reference a directive
  * value or a directive. If a directive value is referenced opt_index must be
@@ -32,8 +31,12 @@ export class Finding {
    * @param value The directive value, if exists.
    */
   constructor(
-      public type: Type, public description: string, public severity: Severity,
-      public directive: string, public value?: string) {}
+    public type: Type,
+    public description: string,
+    public severity: Severity,
+    public directive: string,
+    public value?: string
+  ) {}
 
   /**
    * Returns the highest severity of a list of findings.
@@ -45,8 +48,8 @@ export class Finding {
       return Severity.NONE;
     }
 
-    const severities = findings.map((finding) => finding.severity);
-    const min = (prev: Severity, cur: Severity) => prev < cur ? prev : cur;
+    const severities = findings.map(finding => finding.severity);
+    const min = (prev: Severity, cur: Severity) => (prev < cur ? prev : cur);
     return severities.reduce(min, Severity.NONE);
   }
 
@@ -54,12 +57,15 @@ export class Finding {
     if (!(obj instanceof Finding)) {
       return false;
     }
-    return obj.type === this.type && obj.description === this.description &&
-        obj.severity === this.severity && obj.directive === this.directive &&
-        obj.value === this.value;
+    return (
+      obj.type === this.type &&
+      obj.description === this.description &&
+      obj.severity === this.severity &&
+      obj.directive === this.directive &&
+      obj.value === this.value
+    );
   }
 }
-
 
 /**
  * Finding severities.
@@ -74,9 +80,8 @@ export enum Severity {
   LOW = 70,
   LOW_MAYBE = 80,
   INFO = 60,
-  NONE = 100
+  NONE = 100,
 }
-
 
 /**
  * Finding types for evluator checks.

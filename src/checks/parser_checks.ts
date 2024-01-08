@@ -19,10 +19,18 @@
  * limitations under the License.
  */
 
-import { Csp, Directive, Keyword, TrustedTypesSink, isDirective, isHash, isKeyword, isNonce } from '../csp';
+import {
+  Csp,
+  Directive,
+  Keyword,
+  TrustedTypesSink,
+  isDirective,
+  isHash,
+  isKeyword,
+  isNonce,
+} from '../csp';
 
-import { Finding, Severity, Type } from '../finding';
-
+import {Finding, Severity, Type} from '../finding';
 
 /**
  * Checks if the csp contains invalid directives.
@@ -41,23 +49,31 @@ export function checkUnknownDirective(parsedCsps: Csp): Finding[] {
         // Directive is known.
         continue;
       }
-  
+
       if (directive.endsWith(':')) {
-        findings.push(new Finding(
-            Type.UNKNOWN_DIRECTIVE, 'CSP directives don\'t end with a colon.',
-            Severity.SYNTAX, directive));
+        findings.push(
+          new Finding(
+            Type.UNKNOWN_DIRECTIVE,
+            "CSP directives don't end with a colon.",
+            Severity.SYNTAX,
+            directive
+          )
+        );
       } else {
-        findings.push(new Finding(
+        findings.push(
+          new Finding(
             Type.UNKNOWN_DIRECTIVE,
             'Directive "' + directive + '" is not a known CSP directive.',
-            Severity.SYNTAX, directive));
+            Severity.SYNTAX,
+            directive
+          )
+        );
       }
     }
   }
 
   return findings;
 }
-
 
 /**
  * Checks if semicolons are missing in the csp.
@@ -80,11 +96,18 @@ export function checkMissingSemicolon(parsedCsps: Csp): Finding[] {
         // If we find a known directive inside a directive value, it is very
         // likely that a semicolon was forgoten.
         if (isDirective(value)) {
-          findings.push(new Finding(
+          findings.push(
+            new Finding(
               Type.MISSING_SEMICOLON,
               'Did you forget the semicolon? ' +
-                  '"' + value + '" seems to be a directive, not a value.',
-              Severity.SYNTAX, directive, value));
+                '"' +
+                value +
+                '" seems to be a directive, not a value.',
+              Severity.SYNTAX,
+              directive,
+              value
+            )
+          );
         }
       }
     }
@@ -92,7 +115,6 @@ export function checkMissingSemicolon(parsedCsps: Csp): Finding[] {
 
   return findings;
 }
-
 
 /**
  * Checks if csp contains invalid keywords.
@@ -104,8 +126,7 @@ export function checkMissingSemicolon(parsedCsps: Csp): Finding[] {
  */
 export function checkInvalidKeyword(parsedCsps: Csp): Finding[] {
   const findings: Finding[] = [];
-  const keywordsNoTicks =
-      Object.values(Keyword).map((k) => k.replace(/'/g, ''));
+  const keywordsNoTicks = Object.values(Keyword).map(k => k.replace(/'/g, ''));
 
   for (const cspChecked of parsedCsps.directives) {
     for (const [directive, directiveValues] of Object.entries(cspChecked)) {
@@ -114,19 +135,26 @@ export function checkInvalidKeyword(parsedCsps: Csp): Finding[] {
       }
       for (const value of directiveValues) {
         // Check if single ticks have been forgotten.
-        if (keywordsNoTicks.some((k) => k === value) ||
-            value.startsWith('nonce-') ||
-            value.match(/^(sha256|sha384|sha512)-/)) {
-          findings.push(new Finding(
+        if (
+          keywordsNoTicks.some(k => k === value) ||
+          value.startsWith('nonce-') ||
+          value.match(/^(sha256|sha384|sha512)-/)
+        ) {
+          findings.push(
+            new Finding(
               Type.INVALID_KEYWORD,
               'Did you forget to surround "' + value + '" with single-ticks?',
-              Severity.SYNTAX, directive, value));
+              Severity.SYNTAX,
+              directive,
+              value
+            )
+          );
           continue;
         }
 
         // Continue, if the value doesn't start with single tick.
         // All CSP keywords start with a single tick.
-        if (!value.startsWith('\'')) {
+        if (!value.startsWith("'")) {
           continue;
         }
 
@@ -137,7 +165,7 @@ export function checkInvalidKeyword(parsedCsps: Csp): Finding[] {
           }
         } else if (directive === Directive.TRUSTED_TYPES) {
           // Continue, if it's an allowed Trusted Types keyword.
-          if (value === '\'allow-duplicates\'' || value === '\'none\'') {
+          if (value === "'allow-duplicates'" || value === "'none'") {
             continue;
           }
         } else {
@@ -147,13 +175,18 @@ export function checkInvalidKeyword(parsedCsps: Csp): Finding[] {
           }
         }
 
-        findings.push(new Finding(
-            Type.INVALID_KEYWORD, value + ' seems to be an invalid CSP keyword.',
-            Severity.SYNTAX, directive, value));
+        findings.push(
+          new Finding(
+            Type.INVALID_KEYWORD,
+            value + ' seems to be an invalid CSP keyword.',
+            Severity.SYNTAX,
+            directive,
+            value
+          )
+        );
       }
     }
   }
 
   return findings;
 }
-

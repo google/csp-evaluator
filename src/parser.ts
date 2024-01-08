@@ -16,8 +16,8 @@
  * @author lwe@google.com (Lukas Weichselbaum)
  */
 
-import { Csp, isKeyword, isUrlScheme } from './csp';
-import { mergeCspHeaders } from './utils';
+import {Csp, isKeyword, isUrlScheme} from './csp';
+import {mergeCspHeaders} from './utils';
 
 /**
  * A class to hold a parser for CSP in string format.
@@ -54,8 +54,8 @@ export class CspParser {
     return this.csp;
   }
 
-  parseCsp(unparsedCsp: string): Record<string, string[]|undefined> {
-    const retCspDirectives: Record<string, string[]|undefined> = {};
+  parseCsp(unparsedCsp: string): Record<string, string[] | undefined> {
+    const retCspDirectives: Record<string, string[] | undefined> = {};
 
     // For each token returned by strictly splitting serialized on the U+003B SEMICOLON character (;):
     const directiveTokens = unparsedCsp.split(';');
@@ -65,7 +65,7 @@ export class CspParser {
 
       // If token is an empty string, or if token is not an ASCII string, continue.
       /* eslint-disable no-control-regex */
-      if (directiveToken === "" || !/^[\x00-\xFF]*$/.test(directiveToken)) {
+      if (directiveToken === '' || !/^[\x00-\xFF]*$/.test(directiveToken)) {
         continue;
       }
       /* eslint-enable no-control-regex */
@@ -83,8 +83,11 @@ export class CspParser {
         }
 
         const directiveValues: string[] = [];
-        for (let directiveValue, j = 1; (directiveValue = directiveParts[j]);
-             j++) {
+        for (
+          let directiveValue, j = 1;
+          (directiveValue = directiveParts[j]);
+          j++
+        ) {
           // Let directive be a new directive whose name is directive name, and value is directive value.
           directiveValue = normalizeDirectiveValue(directiveValue);
           if (!directiveValues.includes(directiveValue)) {

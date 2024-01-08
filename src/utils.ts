@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-
 /**
  * Removes scheme from url.
  * @param url Url.
@@ -37,11 +36,11 @@ export function getSchemeFreeUrl(url: string): string {
  */
 export function getHostname(url: string): string {
   const hostname = new URL(
-                       'https://' +
-                       getSchemeFreeUrl(url)
-                           .replace(':*', '')  // Remove wildcard port
-                           .replace('*', 'wildcard_placeholder'))
-                       .hostname.replace('wildcard_placeholder', '*');
+    'https://' +
+      getSchemeFreeUrl(url)
+        .replace(':*', '') // Remove wildcard port
+        .replace('*', 'wildcard_placeholder')
+  ).hostname.replace('wildcard_placeholder', '*');
 
   // Some browsers strip the brackets from IPv6 addresses when you access the
   // hostname. If the scheme free url starts with something that vaguely looks
@@ -69,16 +68,21 @@ function setScheme(u: string): string {
  * @return First match found in url list, null otherwise.
  */
 export function matchWildcardUrls(
-    cspUrlString: string, listOfUrlStrings: string[]): URL|null {
+  cspUrlString: string,
+  listOfUrlStrings: string[]
+): URL | null {
   // non-Chromium browsers don't support wildcards in domain names. We work
   // around this by replacing the wildcard with `wildcard_placeholder` before
   // parsing the domain and using that as a magic string. This magic string is
   // encapsulated in this function such that callers of this function do not
   // have to worry about this detail.
-  const cspUrl =
-      new URL(setScheme(cspUrlString
-                            .replace(':*', '')  // Remove wildcard port
-                            .replace('*', 'wildcard_placeholder')));
+  const cspUrl = new URL(
+    setScheme(
+      cspUrlString
+        .replace(':*', '') // Remove wildcard port
+        .replace('*', 'wildcard_placeholder')
+    )
+  );
   const listOfUrls = listOfUrlStrings.map(u => new URL(setScheme(u)));
   const host = cspUrl.hostname.toLowerCase();
   const hostHasWildcard = host.startsWith('wildcard_placeholder.');
@@ -122,7 +126,6 @@ export function matchWildcardUrls(
   return null;
 }
 
-
 /**
  * Applies a check to all directive values of a csp.
  * @param parsedCsp Parsed CSP.
@@ -130,8 +133,8 @@ export function matchWildcardUrls(
  *   should get applied on directive values.
  */
 export function applyCheckFunktionToDirectives(
-    parsedCsp: Record<string, string[]|undefined>,
-    check: (directive: string, directiveValues: string[]) => void,
+  parsedCsp: Record<string, string[] | undefined>,
+  check: (directive: string, directiveValues: string[]) => void
 ) {
   const directiveNames = Object.keys(parsedCsp);
 
@@ -144,5 +147,7 @@ export function applyCheckFunktionToDirectives(
 }
 
 export function mergeCspHeaders(headerValues: string[]): string {
-  return headerValues.map(Function.prototype.call, String.prototype.trim).join(', ');
+  return headerValues
+    .map(Function.prototype.call, String.prototype.trim)
+    .join(', ');
 }

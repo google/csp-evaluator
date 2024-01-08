@@ -4,11 +4,11 @@
 
  import 'jasmine';
 
- import {Csp,} from '../csp';
- import {Severity} from '../finding';
- import {CspParser} from '../parser';
+ import {Csp,} from '../../src/csp';
+ import {Severity} from '../../src/finding';
+ import {CspParser} from '../../src/parser';
  
- import * as lighthouseChecks from './lighthouse_checks';
+ import * as lighthouseChecks from '../../src/lighthouse/lighthouse_checks';
  
  function parsePolicies(policies: string[]): Csp[] {
    return policies.map(p => (new CspParser(p)).csp);

@@ -18,12 +18,11 @@
  * limitations under the License.
  */
 
-
 /**
  * Domains that would allow a CSP bypass if allowlisted.
  * Only most common paths will be listed here. Hence there might still be other
  * paths on these domains that would allow a bypass.
  */
 export const URLS: string[] = [
-  '//ajax.googleapis.com/ajax/libs/yui/2.8.0r4/build/charts/assets/charts.swf'
+  '//ajax.googleapis.com/ajax/libs/yui/2.8.0r4/build/charts/assets/charts.swf',
 ];

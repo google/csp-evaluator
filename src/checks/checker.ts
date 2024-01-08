@@ -2,8 +2,8 @@
  * @fileoverview Shared interfaces for functions that check CSP policies.
  */
 
-import { Csp } from '../csp';
-import { Finding } from '../finding';
+import {Csp} from '../csp';
+import {Finding} from '../finding';
 
 /**
  * A function that checks a list of Csps for problems and returns an unordered

@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 
-import { CheckerFunction } from './checks/checker';
+import {CheckerFunction} from './checks/checker';
 import * as parserChecks from './checks/parser_checks';
 import * as securityChecks from './checks/security_checks';
 import * as strictcspChecks from './checks/strictcsp_checks';
-import { Csp, Version } from './csp';
-import { Finding } from './finding';
-
-
+import {Csp, Version} from './csp';
+import {Finding} from './finding';
 
 /**
  * A class to hold a CSP Evaluator.
@@ -65,8 +63,9 @@ export class CspEvaluator {
    * @export
    */
   evaluate(
-      parsedCspChecks?: CheckerFunction[],
-      effectiveCspChecks?: CheckerFunction[]): Finding[] {
+    parsedCspChecks?: CheckerFunction[],
+    effectiveCspChecks?: CheckerFunction[]
+  ): Finding[] {
     this.findings = [];
     const checks = effectiveCspChecks || DEFAULT_CHECKS;
 
@@ -92,21 +91,25 @@ export class CspEvaluator {
   }
 }
 
-
 /**
  * Set of default checks to run.
  */
 export const DEFAULT_CHECKS: CheckerFunction[] = [
-  securityChecks.checkScriptUnsafeInline, securityChecks.checkScriptUnsafeEval,
-  securityChecks.checkPlainUrlSchemes, securityChecks.checkWildcards,
+  securityChecks.checkScriptUnsafeInline,
+  securityChecks.checkScriptUnsafeEval,
+  securityChecks.checkPlainUrlSchemes,
+  securityChecks.checkWildcards,
   securityChecks.checkMissingDirectives,
   securityChecks.checkScriptAllowlistBypass,
-  securityChecks.checkFlashObjectAllowlistBypass, securityChecks.checkIpSource,
-  securityChecks.checkNonceLength, securityChecks.checkSrcHttp,
-  securityChecks.checkDeprecatedDirective, parserChecks.checkUnknownDirective,
-  parserChecks.checkMissingSemicolon, parserChecks.checkInvalidKeyword
+  securityChecks.checkFlashObjectAllowlistBypass,
+  securityChecks.checkIpSource,
+  securityChecks.checkNonceLength,
+  securityChecks.checkSrcHttp,
+  securityChecks.checkDeprecatedDirective,
+  parserChecks.checkUnknownDirective,
+  parserChecks.checkMissingSemicolon,
+  parserChecks.checkInvalidKeyword,
 ];
-
 
 /**
  * Strict CSP and backward compatibility checks.
@@ -116,5 +119,5 @@ export const STRICTCSP_CHECKS: CheckerFunction[] = [
   strictcspChecks.checkStrictDynamicNotStandalone,
   strictcspChecks.checkUnsafeInlineFallback,
   strictcspChecks.checkAllowlistFallback,
-  strictcspChecks.checkRequiresTrustedTypesForScripts
+  strictcspChecks.checkRequiresTrustedTypesForScripts,
 ];
