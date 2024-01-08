@@ -1,4 +1,6 @@
 dest/
 *.js
 dist
+build
+src
 node_modules

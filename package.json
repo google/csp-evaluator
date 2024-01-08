@@ -19,7 +19,13 @@
   },
   "scripts": {
     "test": "tsc && npx jasmine --config=jasmine.json",
-    "lint": "eslint . --ext .ts"
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run lint"
   },
   "devDependencies": {
     "@types/jasmine": "^5.1.4",
@@ -27,6 +33,8 @@
     "@typescript-eslint/parser": "^6.17.0",
     "eslint": "^8.56.0",
     "jasmine": "^5.1.0",
-    "typescript": "^5.3.3"
+    "typescript": "~5.2.0",
+    "gts": "^5.2.0",
+    "@types/node": "20.8.2"
   }
 }
