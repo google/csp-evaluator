@@ -21,24 +21,24 @@ import 'jasmine';
 
 import { CspEvaluator } from './evaluator';
 import { Finding, Severity, Type } from './finding';
-import { EnforcedCsps } from './enforced_csps';
+import { Csp } from './csp';
 
 describe('Test evaluator', () => {
   it('CspEvaluator', () => {
-    const fakeCsp = new EnforcedCsps();
+    const fakeCsp = new Csp();
     const evaluator = new CspEvaluator(fakeCsp);
-    expect(evaluator.csps).toBe(fakeCsp);
+    expect(evaluator.csp).toBe(fakeCsp);
   });
 
   it('Evaluate', () => {
     const fakeFinding = new (Finding)(
         Type.UNKNOWN_DIRECTIVE, 'Fake description', Severity.MEDIUM, 'fake-directive', 'fake-directive-value');
     
-    const fakeVerifier = (parsedCsp: EnforcedCsps) => {
+    const fakeVerifier = (parsedCsp: Csp) => {
       return [fakeFinding];
     };
 
-    const fakeCsp = new EnforcedCsps();
+    const fakeCsp = new Csp();
     const evaluator = new (CspEvaluator)(fakeCsp);
     const findings = evaluator.evaluate([fakeVerifier, fakeVerifier], [fakeVerifier]);
 

@@ -19,8 +19,7 @@
  * limitations under the License.
  */
 
-import { Directive, Keyword, TrustedTypesSink, isDirective, isHash, isKeyword, isNonce } from '../csp';
-import { EnforcedCsps } from '../enforced_csps';
+import { Csp, Directive, Keyword, TrustedTypesSink, isDirective, isHash, isKeyword, isNonce } from '../csp';
 
 import { Finding, Severity, Type } from '../finding';
 
@@ -33,11 +32,11 @@ import { Finding, Severity, Type } from '../finding';
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkUnknownDirective(parsedCsps: EnforcedCsps): Finding[] {
+export function checkUnknownDirective(parsedCsps: Csp): Finding[] {
   const findings: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    for (const directive of Object.keys(cspChecked.directives)) {
+  for (const currentCsp of parsedCsps.directives) {
+    for (const directive of Object.keys(currentCsp)) {
       if (isDirective(directive)) {
         // Directive is known.
         continue;
@@ -69,12 +68,11 @@ export function checkUnknownDirective(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkMissingSemicolon(parsedCsps: EnforcedCsps): Finding[] {
+export function checkMissingSemicolon(parsedCsps: Csp): Finding[] {
   const findings: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    for (const [directive, directiveValues] of Object.entries(
-      cspChecked.directives)) {
+  for (const cspChecked of parsedCsps.directives) {
+    for (const [directive, directiveValues] of Object.entries(cspChecked)) {
       if (directiveValues === undefined) {
         continue;
       }
@@ -104,14 +102,13 @@ export function checkMissingSemicolon(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkInvalidKeyword(parsedCsps: EnforcedCsps): Finding[] {
+export function checkInvalidKeyword(parsedCsps: Csp): Finding[] {
   const findings: Finding[] = [];
   const keywordsNoTicks =
       Object.values(Keyword).map((k) => k.replace(/'/g, ''));
 
-  for (const cspChecked of parsedCsps) {
-    for (const [directive, directiveValues] of Object.entries(
-      cspChecked.directives)) {
+  for (const cspChecked of parsedCsps.directives) {
+    for (const [directive, directiveValues] of Object.entries(cspChecked)) {
       if (directiveValues === undefined) {
         continue;
       }

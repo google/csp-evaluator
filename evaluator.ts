@@ -20,8 +20,7 @@ import { CheckerFunction } from './checks/checker';
 import * as parserChecks from './checks/parser_checks';
 import * as securityChecks from './checks/security_checks';
 import * as strictcspChecks from './checks/strictcsp_checks';
-import { Version } from './csp';
-import { EnforcedCsps } from './enforced_csps';
+import { Csp, Version } from './csp';
 import { Finding } from './finding';
 
 
@@ -33,7 +32,7 @@ import { Finding } from './finding';
  */
 export class CspEvaluator {
   version: Version;
-  csps: EnforcedCsps;
+  csp: Csp;
 
   /**
    * List of findings reported by checks.
@@ -44,7 +43,7 @@ export class CspEvaluator {
    * @param parsedCsp A parsed list of Content Security Policy.
    * @param cspVersion CSP version to apply checks for.
    */
-  constructor(parsedCsps: EnforcedCsps, cspVersion?: Version) {
+  constructor(parsedCsps: Csp, cspVersion?: Version) {
     /**
      * CSP version.
      */
@@ -53,7 +52,7 @@ export class CspEvaluator {
     /**
      * Parsed CSPs.
      */
-    this.csps = parsedCsps;
+    this.csp = parsedCsps;
   }
 
   /**
@@ -75,12 +74,12 @@ export class CspEvaluator {
     // supporting a specific version of CSP.
     // For example a browser supporting only CSP1 will ignore nonces and
     // therefore 'unsafe-inline' would not get ignored if a policy has nonces.
-    const effectiveCsps = this.csps.getEffectiveCsps(this.version, this.findings);
+    const effectiveCsps = this.csp.getEffectiveCsp(this.version, this.findings);
 
     // Checks independent of CSP version.
     if (parsedCspChecks) {
       for (const check of parsedCspChecks) {
-        this.findings = this.findings.concat(check(this.csps));
+        this.findings = this.findings.concat(check(this.csp));
       }
     }
 

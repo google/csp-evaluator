@@ -26,9 +26,7 @@
  * limitations under the License.
  */
 
-import { Directive, Keyword, TrustedTypesSink } from '../csp';
-import { EnforcedCsps } from '../enforced_csps';
-
+import { Csp, Directive, Keyword, TrustedTypesSink } from '../csp';
 import { Finding, Severity, Type } from '../finding';
 
 
@@ -40,12 +38,12 @@ import { Finding, Severity, Type } from '../finding';
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkStrictDynamic(parsedCsps: EnforcedCsps): Finding[] {
+export function checkStrictDynamic(parsedCsps: Csp): Finding[] {
   const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
-  for (const csp of parsedCsps) {
-    const values: string[] = csp.directives[directiveName] || [];
+  for (const currentCsp of parsedCsps.directives) {
+    const values: string[] = currentCsp[directiveName] || [];
   
     const schemeOrHostPresent = values.some((v) => !v.startsWith('\''));
   
@@ -71,12 +69,12 @@ export function checkStrictDynamic(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkStrictDynamicNotStandalone(parsedCsps: EnforcedCsps): Finding[] {
+export function checkStrictDynamicNotStandalone(parsedCsps: Csp): Finding[] {
   const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
-  for (const csp of parsedCsps) {
-    const values: string[] = csp.directives[directiveName] || [];
+  for (const currentCsp of parsedCsps.directives) {
+    const values: string[] = currentCsp[directiveName] || [];
 
     if (values.includes(Keyword.STRICT_DYNAMIC) &&
         (!parsedCsps.policyHasScriptNonces() &&
@@ -102,7 +100,7 @@ export function checkStrictDynamicNotStandalone(parsedCsps: EnforcedCsps): Findi
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkUnsafeInlineFallback(parsedCsps: EnforcedCsps): Finding[] {
+export function checkUnsafeInlineFallback(parsedCsps: Csp): Finding[] {
   if (!parsedCsps.policyHasScriptNonces() &&
       !parsedCsps.policyHasScriptHashes()) {
     return [];
@@ -111,8 +109,8 @@ export function checkUnsafeInlineFallback(parsedCsps: EnforcedCsps): Finding[] {
   const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
-  for (const csp of parsedCsps) {
-    const values: string[] = csp.directives[directiveName] || [];
+  for (const currentCsp of parsedCsps.directives) {
+    const values: string[] = currentCsp[directiveName] || [];
 
     if (!values.includes(Keyword.UNSAFE_INLINE)) {
       findings.push(new Finding(
@@ -138,12 +136,12 @@ export function checkUnsafeInlineFallback(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkAllowlistFallback(parsedCsps: EnforcedCsps): Finding[] {
+export function checkAllowlistFallback(parsedCsps: Csp): Finding[] {
   const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
   const findings: Finding[] = [];
 
-  for (const csp of parsedCsps) {
-    const values: string[] = csp.directives[directiveName] || [];
+  for (const currentCsp of parsedCsps.directives) {
+    const values: string[] = currentCsp[directiveName] || [];
 
     if (!values.includes(Keyword.STRICT_DYNAMIC)) {
       return [];
@@ -173,11 +171,10 @@ export function checkAllowlistFallback(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp A parsed csp.
  */
-export function checkRequiresTrustedTypesForScripts(parsedCsps: EnforcedCsps): Finding[] {
-
-  for (const cspChecked of parsedCsps) {
-    const directiveName = cspChecked.getEffectiveDirective(Directive.REQUIRE_TRUSTED_TYPES_FOR);
-    const values: string[] = cspChecked.directives[directiveName] || [];
+export function checkRequiresTrustedTypesForScripts(parsedCsps: Csp): Finding[] {
+  const directiveName = parsedCsps.getEffectiveDirective(Directive.REQUIRE_TRUSTED_TYPES_FOR);
+  for (const cspChecked of parsedCsps.directives) {
+    const values: string[] = cspChecked[directiveName] || [];
 
     if (values.includes(TrustedTypesSink.SCRIPT)) {
       return [];

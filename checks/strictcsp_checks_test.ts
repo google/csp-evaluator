@@ -31,7 +31,7 @@ import * as strictcspChecks from './strictcsp_checks';
  * @param checkFunction check.
  */
 function checkCsp(test: string, checkFunction: CheckerFunction): Finding[] {
-  const parsedCsp = (new CspParser(test)).csps;
+  const parsedCsp = (new CspParser(test)).csp;
   return checkFunction(parsedCsp);
 }
 

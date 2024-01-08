@@ -18,7 +18,7 @@
 
 import 'jasmine';
 
-import { getHostname, getSchemeFreeUrl, matchWildcardUrls } from './utils';
+import { getHostname, getSchemeFreeUrl, matchWildcardUrls, mergeCspHeaders } from './utils';
 
 const TEST_BYPASSES = [
   'https://googletagmanager.com/gtm/js', 'https://www.google.com/jsapi',
@@ -143,5 +143,31 @@ describe('Test Utils', () => {
 
   it('GetHostnameIPv6WithPartialProtocol', () => {
     expect(getHostname('//[::1]')).toBe('[::1]');
+  });
+
+  it('MergeCspHeadersSingleHeader', () => {
+    expect(mergeCspHeaders(
+      [
+        'default-src \'none\'; script-src https:;'
+      ]
+    )).toBe('default-src \'none\'; script-src https:;');
+  });
+
+  it('MergeCspHeadersMultipleHeader', () => {
+    expect(mergeCspHeaders(
+      [
+        'default-src \'none\'; script-src https:',
+        'default-src \'self\';'
+      ]
+    )).toBe('default-src \'none\'; script-src https:, default-src \'self\';');
+  });
+
+  it('MergeCspHeadersMultipleHeaderWithSpaces', () => {
+    expect(mergeCspHeaders(
+      [
+        'default-src \'none\'; script-src https:; ',
+        'default-src \'self\'; '
+      ]
+    )).toBe('default-src \'none\'; script-src https:;, default-src \'self\';');
   });
 });

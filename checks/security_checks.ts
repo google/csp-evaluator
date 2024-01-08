@@ -20,8 +20,7 @@
 import * as angular from '../allowlist_bypasses/angular';
 import * as flash from '../allowlist_bypasses/flash';
 import * as jsonp from '../allowlist_bypasses/jsonp';
-import { Directive, Keyword, isNonce, isUrlScheme } from '../csp';
-import { EnforcedCsps } from '../enforced_csps';
+import { Csp, Directive, Keyword, isNonce, isUrlScheme } from '../csp';
 import { Finding, Severity, Type } from '../finding';
 import * as utils from '../utils';
 
@@ -53,12 +52,12 @@ export const URL_SCHEMES_CAUSING_XSS: string[] = ['data:', 'http:', 'https:'];
  *  are active in a certain version of CSP (e.g. no unsafe-inline if a nonce
  *  is present).
  */
-export function checkScriptUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
+export function checkScriptUnsafeInline(effectiveCsp: Csp): Finding[] {
   const findings: Finding[] = [];
 
-  for (const cspChecked of effectiveCsp) {
-    const directiveName = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
-    const values: string[] = cspChecked.directives[directiveName] || [];
+  const directiveName = effectiveCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
+  for (const cspChecked of effectiveCsp.directives) {
+    const values: string[] = cspChecked[directiveName] || [];
 
     // Check if unsafe-inline is present.
     if (values.includes(Keyword.UNSAFE_INLINE)) {
@@ -87,12 +86,12 @@ export function checkScriptUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
  *  are active in a certain version of CSP (e.g. no unsafe-inline if a nonce
  *  is present).
  */
-export function checkStyleUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
+export function checkStyleUnsafeInline(effectiveCsp: Csp): Finding[] {
   const findings: Finding[] = [];
 
-  for (const cspChecked of effectiveCsp) {
-    const directiveName = cspChecked.getEffectiveDirective(Directive.STYLE_SRC);
-    const values: string[] = cspChecked.directives[directiveName] || [];
+  const directiveName = effectiveCsp.getEffectiveDirective(Directive.STYLE_SRC);
+  for (const cspChecked of effectiveCsp.directives) {
+    const values: string[] = cspChecked[directiveName] || [];
 
     // Check if unsafe-inline is present.
     if (values.includes(Keyword.UNSAFE_INLINE)) {
@@ -116,12 +115,12 @@ export function checkStyleUnsafeInline(effectiveCsp: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkScriptWasmUnsafeEval(parsedCsps: EnforcedCsps): Finding[] {
+export function checkScriptWasmUnsafeEval(parsedCsps: Csp): Finding[] {
   const findings: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    const directiveName = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
-    const values: string[] = cspChecked.directives[directiveName] || [];
+  const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
+  for (const cspChecked of parsedCsps.directives) {
+    const values: string[] = cspChecked[directiveName] || [];
 
     // Check if wasm-unsafe-eval is present.
     if (values.includes(Keyword.WASM_UNSAFE_EVAL)) {
@@ -145,10 +144,10 @@ export function checkScriptWasmUnsafeEval(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkScriptUnsafeEval(parsedCsps: EnforcedCsps): Finding[] {
-  for (const cspChecked of parsedCsps) {
-    const directiveName = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
-    const values: string[] = cspChecked.directives[directiveName] || [];
+export function checkScriptUnsafeEval(parsedCsps: Csp): Finding[] {
+  const directiveName = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
+  for (const cspChecked of parsedCsps.directives) {
+    const values: string[] = cspChecked[directiveName] || [];
 
     // Check if unsafe-eval is present.
     if (values.includes(Keyword.UNSAFE_EVAL)) {
@@ -172,14 +171,13 @@ export function checkScriptUnsafeEval(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkPlainUrlSchemes(parsedCsps: EnforcedCsps): Finding[] {
+export function checkPlainUrlSchemes(parsedCsps: Csp): Finding[] {
   const violations: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    const directivesToCheck = cspChecked.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
-
+  const directivesToCheck = parsedCsps.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
+  for (const cspChecked of parsedCsps.directives) {
     for (const directive of directivesToCheck) {
-      const values = cspChecked.directives[directive] || [];
+      const values = cspChecked[directive] || [];
       for (const value of values) {
         if (URL_SCHEMES_CAUSING_XSS.includes(value)) {
           violations.push(new Finding(
@@ -205,11 +203,11 @@ export function checkPlainUrlSchemes(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkPlainUrlSchemesInFormActions(parsedCsps: EnforcedCsps): Finding[] {
+export function checkPlainUrlSchemesInFormActions(parsedCsps: Csp): Finding[] {
   const violations: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    const values = cspChecked.directives[Directive.FORM_ACTION] || [];
+  for (const cspChecked of parsedCsps.directives) {
+    const values = cspChecked[Directive.FORM_ACTION] || [];
     for (const value of values) {
       if (value == 'https:' || value == 'http:') {
         violations.push(new Finding(
@@ -233,14 +231,13 @@ export function checkPlainUrlSchemesInFormActions(parsedCsps: EnforcedCsps): Fin
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkWildcards(parsedCsps: EnforcedCsps): Finding[] {
+export function checkWildcards(parsedCsps: Csp): Finding[] {
   const violations: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    const directivesToCheck = cspChecked.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
-
+  const directivesToCheck = parsedCsps.getEffectiveDirectives(DIRECTIVES_CAUSING_XSS);
+  for (const cspChecked of parsedCsps.directives) {
     for (const directive of directivesToCheck) {
-      const values = cspChecked.directives[directive] || [];
+      const values = cspChecked[directive] || [];
       for (const value of values) {
         const url = utils.getSchemeFreeUrl(value);
         if (url === '*') {
@@ -260,14 +257,14 @@ export function checkWildcards(parsedCsps: EnforcedCsps): Finding[] {
  * Checks if object-src is restricted to none either directly or via a
  * default-src.
  */
-export function checkMissingObjectSrcDirective(parsedCsps: EnforcedCsps): Finding[] {
+export function checkMissingObjectSrcDirective(parsedCsps: Csp): Finding[] {
   let objectRestrictions: string[]|undefined = [];
 
-  for (const cspChecked of parsedCsps) {
-    if (Directive.OBJECT_SRC in cspChecked.directives) {
-      objectRestrictions = cspChecked.directives[Directive.OBJECT_SRC];
-    } else if (Directive.DEFAULT_SRC in cspChecked.directives) {
-      objectRestrictions = cspChecked.directives[Directive.DEFAULT_SRC];
+  for (const cspChecked of parsedCsps.directives) {
+    if (Directive.OBJECT_SRC in cspChecked) {
+      objectRestrictions = cspChecked[Directive.OBJECT_SRC];
+    } else if (Directive.DEFAULT_SRC in cspChecked) {
+      objectRestrictions = cspChecked[Directive.DEFAULT_SRC];
     }
   }
 
@@ -283,10 +280,10 @@ export function checkMissingObjectSrcDirective(parsedCsps: EnforcedCsps): Findin
 /**
  * Checks if script-src is restricted either directly or via a default-src.
  */
-export function checkMissingScriptSrcDirective(parsedCsps: EnforcedCsps): Finding[] {
-  for (const cspChecked of parsedCsps) {
-    if (Directive.SCRIPT_SRC in cspChecked.directives ||
-        Directive.DEFAULT_SRC in cspChecked.directives) {
+export function checkMissingScriptSrcDirective(parsedCsps: Csp): Finding[] {
+  for (const cspChecked of parsedCsps.directives) {
+    if (Directive.SCRIPT_SRC in cspChecked ||
+        Directive.DEFAULT_SRC in cspChecked) {
       return [];
     }
   }
@@ -298,10 +295,10 @@ export function checkMissingScriptSrcDirective(parsedCsps: EnforcedCsps): Findin
 /**
  * Checks if style-src is restricted either directly or via a default-src.
  */
-export function checkMissingStyleSrcDirective(parsedCsps: EnforcedCsps): Finding[] {
-  for (const cspChecked of parsedCsps) {
-    if (Directive.STYLE_SRC in cspChecked.directives ||
-        Directive.DEFAULT_SRC in cspChecked.directives) {
+export function checkMissingStyleSrcDirective(parsedCsps: Csp): Finding[] {
+  for (const cspChecked of parsedCsps.directives) {
+    if (Directive.STYLE_SRC in cspChecked ||
+        Directive.DEFAULT_SRC in cspChecked) {
       return [];
     }
   }
@@ -314,9 +311,9 @@ export function checkMissingStyleSrcDirective(parsedCsps: EnforcedCsps): Finding
 /**
  * Checks if form-action is restricted.
  */
-export function checkMissingFormActionDirective(parsedCsps: EnforcedCsps): Finding[] {
-  for (const cspChecked of parsedCsps) {
-    if (Directive.FORM_ACTION in cspChecked.directives) {
+export function checkMissingFormActionDirective(parsedCsps: Csp): Finding[] {
+  for (const cspChecked of parsedCsps.directives) {
+    if (Directive.FORM_ACTION in cspChecked) {
       return [];
     }
   }
@@ -329,9 +326,7 @@ export function checkMissingFormActionDirective(parsedCsps: EnforcedCsps): Findi
  * Checks if the base-uri needs to be restricted and if so, whether it has been
  * restricted.
  */
-export function checkMissingBaseUriDirective(parsedCsps: EnforcedCsps): Finding[] {
-  const findings: Finding[] = [];
-
+export function checkMissingBaseUriDirective(parsedCsps: Csp): Finding[] {
   // base-uri can be used to bypass nonce based CSPs and hash based CSPs that
   // use strict dynamic
   const needsBaseUri = (
@@ -340,32 +335,26 @@ export function checkMissingBaseUriDirective(parsedCsps: EnforcedCsps): Finding[
   );
 
   if (needsBaseUri) {
-    for (const csp of parsedCsps) {
-      if (!(Directive.BASE_URI in csp.directives))  {
-        const description = 'Missing base-uri allows the injection of base tags. ' +
-        'They can be used to set the base URL for all relative (script) ' +
-        'URLs to an attacker controlled domain. ' +
-        `Can you set it to 'none' or 'self'?`;
-        findings.push(new Finding(
-            Type.MISSING_DIRECTIVES, description, Severity.HIGH,
-            Directive.BASE_URI));
+    let hasBaseUri: boolean = false;
+
+    for (const currentCsp of parsedCsps.directives) {
+      if (Directive.BASE_URI in currentCsp)  {
+        hasBaseUri = true;
       }
+    }
+
+    if (!hasBaseUri) {
+      const description = 'Missing base-uri allows the injection of base tags. ' +
+      'They can be used to set the base URL for all relative (script) ' +
+      'URLs to an attacker controlled domain. ' +
+      `Can you set it to 'none' or 'self'?`;
+      return [new Finding(
+          Type.MISSING_DIRECTIVES, description, Severity.HIGH,
+          Directive.BASE_URI)];
     }
   }
   
-  return findings;
-}
-
-/**
- * Checks if the base-uri needs to be restricted and if so, whether it has been
- * restricted.
- */
-export function checkMultipleMissingBaseUriDirective(parsedCsps: EnforcedCsps[]): Finding[] {
-  let findings: Finding[] = [];
-  for (const csp of parsedCsps) {
-    findings = findings.concat(checkMissingBaseUriDirective(csp));
-  }
-  return findings;
+  return [];
 }
 
 
@@ -378,7 +367,7 @@ export function checkMultipleMissingBaseUriDirective(parsedCsps: EnforcedCsps[])
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkMissingDirectives(parsedCsps: EnforcedCsps): Finding[] {
+export function checkMissingDirectives(parsedCsps: Csp): Finding[] {
   return [
     ...checkMissingObjectSrcDirective(parsedCsps),
     ...checkMissingScriptSrcDirective(parsedCsps),
@@ -398,12 +387,12 @@ export function checkMissingDirectives(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkScriptAllowlistBypass(parsedCsps: EnforcedCsps): Finding[] {
+export function checkScriptAllowlistBypass(parsedCsps: Csp): Finding[] {
   const violations: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    const effectiveScriptSrcDirective = cspChecked.getEffectiveDirective(Directive.SCRIPT_SRC);
-    const scriptSrcValues = cspChecked.directives[effectiveScriptSrcDirective] || [];
+  const effectiveScriptSrcDirective = parsedCsps.getEffectiveDirective(Directive.SCRIPT_SRC);
+  for (const cspChecked of parsedCsps.directives) {
+    const scriptSrcValues = cspChecked[effectiveScriptSrcDirective] || [];
     if (scriptSrcValues.includes(Keyword.NONE)) {
       return violations;
     }
@@ -484,15 +473,15 @@ export function checkScriptAllowlistBypass(parsedCsps: EnforcedCsps): Finding[] 
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkFlashObjectAllowlistBypass(parsedCsps: EnforcedCsps): Finding[] {
+export function checkFlashObjectAllowlistBypass(parsedCsps: Csp): Finding[] {
   const violations = [];
 
-  for (const cspChecked of parsedCsps) {
-    const effectiveObjectSrcDirective = cspChecked.getEffectiveDirective(Directive.OBJECT_SRC);
-    const objectSrcValues = cspChecked.directives[effectiveObjectSrcDirective] || [];
+  const effectiveObjectSrcDirective = parsedCsps.getEffectiveDirective(Directive.OBJECT_SRC);
+  for (const cspChecked of parsedCsps.directives) {
+    const objectSrcValues = cspChecked[effectiveObjectSrcDirective] || [];
 
     // If flash is not allowed in plugin-types, continue.
-    const pluginTypes = cspChecked.directives[Directive.PLUGIN_TYPES];
+    const pluginTypes = cspChecked[Directive.PLUGIN_TYPES];
     if (pluginTypes && !pluginTypes.includes('application/x-shockwave-flash')) {
       return [];
     }
@@ -554,10 +543,10 @@ export function looksLikeIpAddress(maybeIp: string): boolean {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkIpSource(parsedCsps: EnforcedCsps): Finding[] {
+export function checkIpSource(parsedCsps: Csp): Finding[] {
   const violations: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
+  for (const cspChecked of parsedCsps.directives) {
     // Function for checking if directive values contain IP addresses.
     const checkIp = (directive: string, directiveValues: string[]) => {
       for (const value of directiveValues) {
@@ -598,12 +587,12 @@ export function checkIpSource(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkDeprecatedDirective(parsedCsps: EnforcedCsps): Finding[] {
+export function checkDeprecatedDirective(parsedCsps: Csp): Finding[] {
   const violations = [];
 
-  for (const cspChecked of parsedCsps) {
+  for (const cspChecked of parsedCsps.directives) {
     // More details: https://www.chromestatus.com/feature/5769374145183744
-    if (Directive.REFLECTED_XSS in cspChecked.directives) {
+    if (Directive.REFLECTED_XSS in cspChecked) {
       violations.push(new Finding(
           Type.DEPRECATED_DIRECTIVE,
           'reflected-xss is deprecated since CSP2. ' +
@@ -612,7 +601,7 @@ export function checkDeprecatedDirective(parsedCsps: EnforcedCsps): Finding[] {
     }
 
     // More details: https://www.chromestatus.com/feature/5680800376815616
-    if (Directive.REFERRER in cspChecked.directives) {
+    if (Directive.REFERRER in cspChecked) {
       violations.push(new Finding(
           Type.DEPRECATED_DIRECTIVE,
           'referrer is deprecated since CSP2. ' +
@@ -621,7 +610,7 @@ export function checkDeprecatedDirective(parsedCsps: EnforcedCsps): Finding[] {
     }
 
     // More details: https://github.com/w3c/webappsec-csp/pull/327
-    if (Directive.DISOWN_OPENER in cspChecked.directives) {
+    if (Directive.DISOWN_OPENER in cspChecked) {
       violations.push(new Finding(
           Type.DEPRECATED_DIRECTIVE,
           'disown-opener is deprecated since CSP3. ' +
@@ -642,11 +631,11 @@ export function checkDeprecatedDirective(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkNonceLength(parsedCsps: EnforcedCsps): Finding[] {
+export function checkNonceLength(parsedCsps: Csp): Finding[] {
   const noncePattern = new RegExp('^\'nonce-(.+)\'$');
   const violations: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
+  for (const cspChecked of parsedCsps.directives) {
     utils.applyCheckFunktionToDirectives(
       cspChecked, (directive, directiveValues) => {
           for (const value of directiveValues) {
@@ -687,13 +676,13 @@ export function checkNonceLength(parsedCsps: EnforcedCsps): Finding[] {
  *
  * @param parsedCsp Parsed CSP.
  */
-export function checkSrcHttp(parsedCsps: EnforcedCsps): Finding[] {
+export function checkSrcHttp(parsedCsps: Csp): Finding[] {
   const violations: Finding[] = [];
 
   const directivesForcingHttps: string[] = [];
   const directivesWithViolation: Record<string, string[]> = {};
 
-  for (const cspChecked of parsedCsps) {
+  for (const cspChecked of parsedCsps.directives) {
     utils.applyCheckFunktionToDirectives(
       cspChecked, (directive, directiveValues) => {
         for (const value of directiveValues) {
@@ -731,16 +720,16 @@ export function checkSrcHttp(parsedCsps: EnforcedCsps): Finding[] {
 /**
  * Checks if the policy has configured reporting in a robust manner.
  */
-export function checkHasConfiguredReporting(parsedCsps: EnforcedCsps): Finding[] {
+export function checkHasConfiguredReporting(parsedCsps: Csp): Finding[] {
   const findings: Finding[] = [];
 
-  for (const cspChecked of parsedCsps) {
-    const reportUriValues: string[] = cspChecked.directives[Directive.REPORT_URI] || [];
+  for (const cspChecked of parsedCsps.directives) {
+    const reportUriValues: string[] = cspChecked[Directive.REPORT_URI] || [];
     if (reportUriValues.length > 0) {
       continue;
     }
 
-    const reportToValues: string[] = cspChecked.directives[Directive.REPORT_TO] || [];
+    const reportToValues: string[] = cspChecked[Directive.REPORT_TO] || [];
     if (reportToValues.length > 0) {
       findings.push(new Finding(
           Type.REPORT_TO_ONLY,

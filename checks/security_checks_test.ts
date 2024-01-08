@@ -32,7 +32,7 @@
   * @param checkFunction check.
   */
  function checkCsp(test: string, checkFunction: CheckerFunction): Finding[] {
-   const parsedCsp = (new CspParser(test)).csps;
+   const parsedCsp = (new CspParser(test)).csp;
    return checkFunction(parsedCsp);
  }
  
@@ -67,13 +67,13 @@
  
    it('CheckScriptUnsafeInlineWithNonce', () => {
      const test = 'script-src \'unsafe-inline\' \'nonce-foobar\'';
-     const parsedCsp = (new CspParser(test)).csps;
+     const parsedCsp = (new CspParser(test)).csp;
    
-     let effectiveCsp = parsedCsp.getEffectiveCsps(Version.CSP1);
+     let effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP1);
      let violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
      expect(violations.length).toBe(1);
    
-     effectiveCsp = parsedCsp.getEffectiveCsps(Version.CSP3);
+     effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP3);
      violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
      expect(violations.length).toBe(0);
    });

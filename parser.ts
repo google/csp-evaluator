@@ -17,14 +17,14 @@
  */
 
 import { Csp, isKeyword, isUrlScheme } from './csp';
-import { EnforcedCsps } from './enforced_csps';
+import { mergeCspHeaders } from './utils';
 
 /**
  * A class to hold a parser for CSP in string format.
  * @unrestricted
  */
 export class CspParser {
-  csps: EnforcedCsps;
+  csp: Csp;
 
   /**
    * @param unparsedCsp A Content Security Policy as string.
@@ -33,10 +33,10 @@ export class CspParser {
     /**
      * Parsed CSP
      */
-    this.csps = new EnforcedCsps();
+    this.csp = new Csp();
 
-    if (!Array.isArray(unparsedCsps)) {
-      unparsedCsps = [ (unparsedCsps as string) ];
+    if (Array.isArray(unparsedCsps)) {
+      unparsedCsps = mergeCspHeaders(unparsedCsps);
     }
 
     this.parse(unparsedCsps);
@@ -46,25 +46,16 @@ export class CspParser {
    * Parses a CSP from a string.
    * @param unparsedCsp CSP as string.
    */
-  parse(unparsedCspList: string[]): EnforcedCsps {
-    const splitCspList: string[] = [];
-    unparsedCspList.forEach(policy => {
-      // For each token returned by splitting list on commas:
-      const policiesList: string[] = policy.split(',');
-
-      // Append policy to policies.
-      splitCspList.push(...policiesList);
+  parse(unparsedCsp: string): Csp {
+    unparsedCsp.split(', ').forEach(currentCsp => {
+      this.csp.directives.push(this.parseCsp(currentCsp));
     });
 
-    splitCspList.forEach(currentCsp => {
-      this.csps.push(this.parseCsp(currentCsp));
-    });
-
-    return this.csps;
+    return this.csp;
   }
 
-  parseCsp(unparsedCsp: string): Csp {
-    const retCsp: Csp = new Csp();
+  parseCsp(unparsedCsp: string): Record<string, string[]|undefined> {
+    const retCspDirectives: Record<string, string[]|undefined> = {};
 
     // For each token returned by strictly splitting serialized on the U+003B SEMICOLON character (;):
     const directiveTokens = unparsedCsp.split(';');
@@ -87,7 +78,7 @@ export class CspParser {
         const directiveName = directiveParts[0].toLowerCase();
 
         // If policy’s directive set contains a directive whose name is directive name, continue.
-        if (directiveName in retCsp.directives) {
+        if (directiveName in retCspDirectives) {
           continue;
         }
 
@@ -102,12 +93,12 @@ export class CspParser {
         }
 
         // Append directive to policy’s directive set.
-        retCsp.directives[directiveName] = directiveValues;
+        retCspDirectives[directiveName] = directiveValues;
       }
     }
 
     // Return policy.
-    return retCsp;
+    return retCspDirectives;
   }
 }
 

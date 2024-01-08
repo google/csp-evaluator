@@ -18,9 +18,6 @@
  */
 
 
-import { Csp } from './csp';
-
-
 /**
  * Removes scheme from url.
  * @param url Url.
@@ -133,15 +130,19 @@ export function matchWildcardUrls(
  *   should get applied on directive values.
  */
 export function applyCheckFunktionToDirectives(
-    parsedCsp: Csp,
+    parsedCsp: Record<string, string[]|undefined>,
     check: (directive: string, directiveValues: string[]) => void,
 ) {
-  const directiveNames = Object.keys(parsedCsp.directives);
+  const directiveNames = Object.keys(parsedCsp);
 
   for (const directive of directiveNames) {
-    const directiveValues = parsedCsp.directives[directive];
+    const directiveValues = parsedCsp[directive];
     if (directiveValues) {
       check(directive, directiveValues);
     }
   }
+}
+
+export function mergeCspHeaders(headerValues: string[]): string {
+  return headerValues.map(Function.prototype.call, String.prototype.trim).join(', ');
 }
