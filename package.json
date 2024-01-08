@@ -1,6 +1,6 @@
 {
   "name": "csp_evaluator",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Evaluate Content Security Policies for a wide range of bypasses and weaknesses",
   "main": "dist/evaluator.js",
   "keywords": [
@@ -17,12 +17,27 @@
     "type": "git",
     "url": "https://github.com/google/csp-evaluator"
   },
+  "engines": {
+    "node": ">=10.0.0"
+  },
   "scripts": {
-    "test": "tsc && npx jasmine --config=jasmine.json"
+    "test": "tsc && npx jasmine --config=jasmine.json",
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run lint"
   },
   "devDependencies": {
-    "@types/jasmine": "^3.6.7",
-    "jasmine": "^3.7.0",
-    "typescript": "^4.2.3"
+    "@types/jasmine": "^5.1.4",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
+    "jasmine": "^5.1.0",
+    "typescript": "~5.2.0",
+    "gts": "^5.2.0",
+    "@types/node": "20.8.2"
   }
 }
