@@ -2,7 +2,7 @@
   "name": "csp_evaluator",
   "version": "2.0.0",
   "description": "Evaluate Content Security Policies for a wide range of bypasses and weaknesses",
-  "main": "build/evaluator.js",
+  "main": "dist/evaluator.js",
   "keywords": [
     "csp",
     "content security policy",

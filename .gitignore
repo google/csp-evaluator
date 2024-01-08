@@ -1,4 +1,4 @@
 dest/
 *.js
-build
+dist
 node_modules
