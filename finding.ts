@@ -98,6 +98,12 @@ export enum Type {
   IP_SOURCE,
   DEPRECATED_DIRECTIVE,
   SRC_HTTP,
+  SRC_NO_PROTOCOL,
+  EXPERIMENTAL,
+  WILDCARD_URL,
+  X_FRAME_OPTIONS_OBSOLETED,
+  STYLE_UNSAFE_INLINE,
+  STATIC_NONCE,
 
   // Strict dynamic and backward compatibility checks
   STRICT_DYNAMIC = 400,
