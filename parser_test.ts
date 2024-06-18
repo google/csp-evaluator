@@ -28,9 +28,11 @@ describe('Test parser', () => {
         'default-src \'none\';' +
         'script-src \'nonce-unsafefoobar\' \'unsafe-eval\'   \'unsafe-inline\' \n' +
         'https://example.com/foo.js foo.bar;      ' +
+        'script-src-elem \'self\' \'unsafe-inline\' https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com https://wchat.freshchat.com;' +
         'object-src \'none\';' +
         'img-src \'self\' https: data: blob:;' +
         'style-src \'self\' \'unsafe-inline\' \'sha256-1DCfk1NYWuHMfoobarfoobar=\';' +
+        'style-src-elem \'self\' \'unsafe-inline\' https://fonts.googleapis.com https://fonts.gstatic.com;' +
         'font-src *;' +
         'child-src *.example.com:9090;' +
         'upgrade-insecure-requests;\n' +
@@ -42,8 +44,9 @@ describe('Test parser', () => {
     // check directives
     const directives = Object.keys(parsedCsp.directives);
     const expectedDirectives = [
-      'default-src', 'script-src', 'object-src', 'img-src', 'style-src',
-      'font-src', 'child-src', 'upgrade-insecure-requests', 'report-uri'
+      'default-src', 'script-src', 'script-src-elem', 'object-src', 'img-src',
+      'style-src', 'style-src-elem', 'font-src', 'child-src',
+      'upgrade-insecure-requests', 'report-uri'
     ];
     expect(expectedDirectives)
         .toEqual(jasmine.arrayWithExactContents(directives));
@@ -60,6 +63,14 @@ describe('Test parser', () => {
         .toEqual(jasmine.arrayWithExactContents(
             parsedCsp.directives['script-src'] as string[]));
 
+    expect([
+      '\'self\'', '\'unsafe-inline\'', 'https://apis.google.com',
+      'https://www.googletagmanager.com', 'https://www.google-analytics.com',
+      'https://wchat.freshchat.com'
+    ])
+        .toEqual(jasmine.arrayWithExactContents(
+            parsedCsp.directives['script-src-elem'] as string[]));
+
     expect(['\'none\''])
         .toEqual(jasmine.arrayWithExactContents(
             parsedCsp.directives['object-src'] as string[]));
@@ -72,6 +83,12 @@ describe('Test parser', () => {
     ])
         .toEqual(jasmine.arrayWithExactContents(
             parsedCsp.directives['style-src'] as string[]));
+    expect([
+      '\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com',
+      'https://fonts.gstatic.com'
+    ])
+        .toEqual(jasmine.arrayWithExactContents(
+            parsedCsp.directives['style-src-elem'] as string[]));
     expect(['*']).toEqual(jasmine.arrayWithExactContents(
         parsedCsp.directives['font-src'] as string[]));
     expect(['*.example.com:9090'])

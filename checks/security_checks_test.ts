@@ -39,10 +39,11 @@ function checkCsp(test: string, checkFunction: CheckerFunction): Finding[] {
 describe('Test security checks', () => {
   /** Tests for csp.securityChecks.checkScriptUnsafeInline */
   it('CheckScriptUnsafeInlineInScriptSrc', () => {
-    const test = 'default-src https:; script-src \'unsafe-inline\'';
+    const test =
+        'default-src https:; script-src \'unsafe-inline\'; script-src-elem \'unsafe-inline\';';
 
     const violations = checkCsp(test, securityChecks.checkScriptUnsafeInline);
-    expect(violations.length).toBe(1);
+    expect(violations.length).toBe(2);
     expect(violations[0].severity).toBe(Severity.HIGH);
   });
 
@@ -54,18 +55,21 @@ describe('Test security checks', () => {
   });
 
   it('CheckScriptUnsafeInlineInDefaultSrcAndNotInScriptSrc', () => {
-    const test = 'default-src \'unsafe-inline\'; script-src https:';
+    const test =
+        'default-src \'unsafe-inline\'; script-src https:; script-src-attr https:; script-src-elem https:';
 
     const violations = checkCsp(test, securityChecks.checkScriptUnsafeInline);
     expect(violations.length).toBe(0);
   });
 
   it('CheckScriptUnsafeInlineWithNonce', () => {
-    const test = 'script-src \'unsafe-inline\' \'nonce-foobar\'';
+    const test =
+        'script-src \'unsafe-inline\' \'nonce-foobar\'; script-src-elem \'unsafe-inline\' \'nonce-foobar\';';
     const parsedCsp = (new CspParser(test)).csp;
 
     let effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP1);
     let violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
+    // script-src-elem and script-src-attr are ignored
     expect(violations.length).toBe(1);
 
     effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP3);
@@ -75,11 +79,13 @@ describe('Test security checks', () => {
 
   /** Tests for csp.securityChecks.checkScriptUnsafeEval */
   it('CheckScriptUnsafeEvalInScriptSrc', () => {
-    const test = 'default-src https:; script-src \'unsafe-eval\'';
+    const test =
+        'default-src https:; script-src \'unsafe-eval\'; script-src-attr \'unsafe-eval\'; script-src-elem \'unsafe-eval\';';
 
     const violations = checkCsp(test, securityChecks.checkScriptUnsafeEval);
-    expect(violations.length).toBe(1);
-    expect(violations[0].severity).toBe(Severity.MEDIUM_MAYBE);
+    expect(violations.length).toBe(3);
+    expect(violations.every((v) => v.severity === Severity.MEDIUM_MAYBE))
+        .toBeTrue();
   });
 
   it('CheckScriptUnsafeEvalInDefaultSrc', () => {
@@ -135,9 +141,10 @@ describe('Test security checks', () => {
 
   /** Tests for csp.securityChecks.checkWildcards */
   it('CheckWildcardsInScriptSrc', () => {
-    const test = 'script-src * http://* //*';
+    const test =
+        'script-src * http://* //*; script-src-attr * http://* //*; script-src-elem * http://* //*';
     const violations = checkCsp(test, securityChecks.checkWildcards);
-    expect(violations.length).toBe(3);
+    expect(violations.length).toBe(9);
     expect(violations.every((v) => v.severity === Severity.HIGH)).toBeTrue();
   });
 
@@ -258,7 +265,8 @@ describe('Test security checks', () => {
   });
 
   it('checkScriptAllowlistBypassWithNoneAndJSONPBypass', () => {
-    const test = 'script-src *.google.com \'none\'';
+    const test =
+        'script-src *.google.com \'none\'; script-src-elem *.google.com \'none\'';
 
     const violations =
         checkCsp(test, securityChecks.checkScriptAllowlistBypass);
@@ -266,51 +274,58 @@ describe('Test security checks', () => {
   });
 
   it('checkScriptAllowlistBypassJSONPBypassEvalRequired', () => {
-    const test = 'script-src https://googletagmanager.com \'unsafe-eval\'';
+    const test =
+        'script-src https://googletagmanager.com \'unsafe-eval\'; script-src-elem https://googletagmanager.com \'unsafe-eval\'';
 
     const violations =
         checkCsp(test, securityChecks.checkScriptAllowlistBypass);
-    expect(violations.length).toBe(1);
-    expect(violations[0].severity).toBe(Severity.HIGH);
+    expect(violations.length).toBe(2);
+    expect(violations.every((v) => v.severity === Severity.HIGH)).toBeTrue();
   });
 
   it('checkScriptAllowlistBypassJSONPBypassEvalRequiredNotPresent', () => {
-    const test = 'script-src https://googletagmanager.com';
+    const test =
+        'script-src https://googletagmanager.com; script-src-elem https://googletagmanager.com;';
 
     const violations =
         checkCsp(test, securityChecks.checkScriptAllowlistBypass);
-    expect(violations.length).toBe(1);
-    expect(violations[0].severity).toBe(Severity.MEDIUM_MAYBE);
+    expect(violations.length).toBe(2);
+    expect(violations.every((v) => v.severity === Severity.MEDIUM_MAYBE))
+        .toBeTrue();
   });
 
   it('checkScriptAllowlistBypassAngularBypass', () => {
-    const test = 'script-src gstatic.com';
+    const test = 'script-src gstatic.com; script-src-elem gstatic.com';
 
     const violations =
         checkCsp(test, securityChecks.checkScriptAllowlistBypass);
-    expect(violations.length).toBe(1);
-    expect(violations[0].severity).toBe(Severity.HIGH);
-    expect(violations[0].description.includes(
-               'gstatic.com is known to host Angular libraries which'))
+    expect(violations.length).toBe(2);
+    expect(violations.every((v) => v.severity === Severity.HIGH)).toBeTrue();
+    expect(violations.every(
+               (v) => v.description.includes(
+                   'gstatic.com is known to host Angular libraries which')))
         .toBeTrue();
   });
 
   it('checkScriptAllowlistBypassNoBypassWarningOnly', () => {
-    const test = 'script-src foo.bar';
+    const test = 'script-src foo.bar; script-src-elem foo.bar';
 
     const violations =
         checkCsp(test, securityChecks.checkScriptAllowlistBypass);
-    expect(violations.length).toBe(1);
-    expect(violations[0].severity).toBe(Severity.MEDIUM_MAYBE);
+    expect(violations.length).toBe(2);
+    expect(violations.every((v) => v.severity === Severity.MEDIUM_MAYBE))
+        .toBeTrue();
   });
 
   it('checkScriptAllowlistBypassNoBypassSelfWarningOnly', () => {
-    const test = 'script-src \'self\'';
+    const test =
+        'script-src \'self\'; script-src-attr \'self\'; script-src-elem \'self\'';
 
     const violations =
         checkCsp(test, securityChecks.checkScriptAllowlistBypass);
-    expect(violations.length).toBe(1);
-    expect(violations[0].severity).toBe(Severity.MEDIUM_MAYBE);
+    expect(violations.length).toBe(2);
+    expect(violations.every((v) => v.severity === Severity.MEDIUM_MAYBE))
+        .toBeTrue();
   });
 
   /** Tests for csp.securityChecks.checkFlashObjectAllowlistBypass */
@@ -464,5 +479,25 @@ describe('Test security checks', () => {
         checkCsp(test, securityChecks.checkHasConfiguredReporting);
 
     expect(violations.length).toBe(0);
+  });
+
+  // The nonce that is present in the script-src directive should not override
+  // the unsafe-inline in the script-src-elem directive.
+  it('checkScriptUnsafeInline_notOverriddenForScriptSrcElem', () => {
+    const test =
+        'script-src \'nonce-aaaaaaaaaa\' strict-dynamic; script-src-elem \'unsafe-inline\';';
+
+    // Make sure there are no ignored directives.
+    const parsedCsp = (new CspParser(test)).csp;
+    const findings: Finding[] = [];
+    const effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP3, findings);
+    expect(findings.length).toBe(0);
+
+    // And make sure testing the normalized CSP does not have any unexpected
+    // violations.
+    const violations = checkCsp(
+        effectiveCsp.convertToString(), securityChecks.checkScriptUnsafeInline);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.HIGH);
   });
 });

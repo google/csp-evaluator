@@ -20,6 +20,7 @@
 import 'jasmine';
 
 import {Directive, isDirective, isHash, isKeyword, isNonce, isUrlScheme, Keyword, Version} from './csp';
+import {Finding, Severity, Type} from './finding';
 import {CspParser} from './parser';
 
 describe('Test Csp', () => {
@@ -36,39 +37,75 @@ describe('Test Csp', () => {
   it('GetEffectiveCspVersion1', () => {
     const testCsp =
         'default-src \'unsafe-inline\' \'strict-dynamic\' \'nonce-123\' ' +
-        '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *';
+        '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *; script-src-attr \'self\'; script-src-elem \'self\'; style-src-attr \'self\'; style-src-elem \'self\';';
     const parsed = (new CspParser(testCsp)).csp;
-    const effectiveCsp = parsed.getEffectiveCsp(Version.CSP1);
+    const findings: Finding[] = [];
+    const effectiveCsp = parsed.getEffectiveCsp(Version.CSP1, findings);
 
+    expect(findings.length)
+        .toBe(0);  // No warnings about unsafe-inline being ignored in CSP 1.
     expect(effectiveCsp.directives[Directive.DEFAULT_SRC]).toEqual([
       '\'unsafe-inline\'', '\'self\''
     ]);
-    expect(effectiveCsp.hasOwnProperty(Directive.REPORT_TO)).toBeFalse();
-    expect(effectiveCsp.hasOwnProperty(Directive.WORKER_SRC)).toBeFalse();
-    expect(effectiveCsp.hasOwnProperty(Directive.MANIFEST_SRC)).toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.REPORT_TO))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.WORKER_SRC))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.MANIFEST_SRC))
+        .toBeFalse();
   });
 
   it('GetEffectiveCspVersion2', () => {
     const testCsp =
         'default-src \'unsafe-inline\' \'strict-dynamic\' \'nonce-123\' ' +
-        '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *';
+        '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *; script-src-attr \'self\'; script-src-elem \'self\'; style-src-attr \'self\'; style-src-elem \'self\';';
     const parsed = (new CspParser(testCsp)).csp;
-    const effectiveCsp = parsed.getEffectiveCsp(Version.CSP2);
+    const findings: Finding[] = [];
+    const effectiveCsp = parsed.getEffectiveCsp(Version.CSP2, findings);
+
+    // Ignored messages are surfaced properly.
+    expect(findings.length).toBe(1);  // Only nonces cause unsafe-inline to be
+                                      // ignored in CSP2, not strict-dynamic.
+    expect(findings[0].value).toBe('\'unsafe-inline\'');
+    expect(findings[0].type).toBe(Type.IGNORED);
+    expect(findings[0].severity).toBe(Severity.NONE);
+    expect(findings[0].directive).toBe(Directive.DEFAULT_SRC);
 
     expect(effectiveCsp.directives[Directive.DEFAULT_SRC]).toEqual([
       '\'nonce-123\'', '\'sha256-foobar\'', '\'self\''
     ]);
-    expect(effectiveCsp.hasOwnProperty(Directive.REPORT_TO)).toBeFalse();
-    expect(effectiveCsp.hasOwnProperty(Directive.WORKER_SRC)).toBeFalse();
-    expect(effectiveCsp.hasOwnProperty(Directive.MANIFEST_SRC)).toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.REPORT_TO))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.WORKER_SRC))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.MANIFEST_SRC))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.SCRIPT_SRC_ATTR))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.SCRIPT_SRC_ELEM))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.STYLE_SRC_ATTR))
+        .toBeFalse();
+    expect(effectiveCsp.directives.hasOwnProperty(Directive.STYLE_SRC_ELEM))
+        .toBeFalse();
   });
 
   it('GetEffectiveCspVersion3', () => {
     const testCsp =
         'default-src \'unsafe-inline\' \'strict-dynamic\' \'nonce-123\' ' +
-        '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *';
+        '\'sha256-foobar\' \'self\'; report-to foo.bar; worker-src *; manifest-src *; script-src-attr \'self\'; script-src-elem \'self\'; style-src-attr \'self\'; style-src-elem \'self\';';
     const parsed = (new CspParser(testCsp)).csp;
-    const effectiveCsp = parsed.getEffectiveCsp(Version.CSP3);
+    const findings: Finding[] = [];
+    const effectiveCsp = parsed.getEffectiveCsp(Version.CSP3, findings);
+
+    // Ignored messages are only on the default-src: Ignoring self and
+    // unsafe-inline because of strict-dynamic and the unsafe-inline because of
+    // the nonce.
+    expect(findings.length).toBe(3);
+    expect(findings.every(f => f.type === Type.IGNORED)).toBeTrue();
+    expect(findings.every(f => f.severity === Severity.NONE)).toBeTrue();
+    expect(findings.every(f => f.directive === Directive.DEFAULT_SRC))
+        .toBeTrue();
 
     expect(effectiveCsp.directives[Directive.DEFAULT_SRC]).toEqual([
       '\'strict-dynamic\'', '\'nonce-123\'', '\'sha256-foobar\''
@@ -76,6 +113,18 @@ describe('Test Csp', () => {
     expect(effectiveCsp.directives[Directive.REPORT_TO]).toEqual(['foo.bar']);
     expect(effectiveCsp.directives[Directive.WORKER_SRC]).toEqual(['*']);
     expect(effectiveCsp.directives[Directive.MANIFEST_SRC]).toEqual(['*']);
+    expect(effectiveCsp.directives[Directive.SCRIPT_SRC_ATTR]).toEqual([
+      '\'self\''
+    ]);
+    expect(effectiveCsp.directives[Directive.SCRIPT_SRC_ELEM]).toEqual([
+      '\'self\''
+    ]);
+    expect(effectiveCsp.directives[Directive.STYLE_SRC_ATTR]).toEqual([
+      '\'self\''
+    ]);
+    expect(effectiveCsp.directives[Directive.STYLE_SRC_ELEM]).toEqual([
+      '\'self\''
+    ]);
   });
 
 
@@ -99,6 +148,36 @@ describe('Test Csp', () => {
     expect(directives).toEqual([Directive.SCRIPT_SRC, Directive.DEFAULT_SRC]);
   });
 
+  it('GetEffectiveDirectives', () => {
+    const testCsp = 'default-src https:; style-src-elem foo.bar';
+    const parsed = (new CspParser(testCsp)).csp;
+
+    const directives = parsed.getEffectiveDirectives([
+      Directive.STYLE_SRC, Directive.STYLE_SRC_ATTR, Directive.STYLE_SRC_ELEM
+    ]);
+    // Both style-src and style-src-attr default to default-src.
+    expect(directives).toEqual([
+      Directive.DEFAULT_SRC, Directive.STYLE_SRC_ELEM
+    ]);
+  });
+
+  it('GetEffectiveDirectives', () => {
+    const testCsp =
+        'default-src https:; script-src foo.bar; script-src-elem bar.baz; style-src foo.bar; style-src-elem bar.baz';
+    const parsed = (new CspParser(testCsp)).csp;
+
+    const directives = parsed.getEffectiveDirectives([
+      Directive.SCRIPT_SRC, Directive.STYLE_SRC, Directive.SCRIPT_SRC_ATTR,
+      Directive.SCRIPT_SRC_ELEM, Directive.STYLE_SRC_ATTR,
+      Directive.STYLE_SRC_ELEM
+    ]);
+    expect(directives).toEqual([
+      Directive.SCRIPT_SRC,  // Both script-src and script-src-attr
+      Directive.STYLE_SRC,   // Both style-src and style-src-attr
+      Directive.SCRIPT_SRC_ELEM,
+      Directive.STYLE_SRC_ELEM,
+    ]);
+  });
 
   it('PolicyHasScriptNoncesScriptSrcWithNonce', () => {
     const testCsp = 'default-src https:; script-src \'nonce-test123\'';

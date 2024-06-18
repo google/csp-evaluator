@@ -30,8 +30,10 @@ import * as utils from '../utils';
  * A list of CSP directives that can allow XSS vulnerabilities if they fail
  * validation.
  */
-export const DIRECTIVES_CAUSING_XSS: Directive[] =
-    [Directive.SCRIPT_SRC, Directive.OBJECT_SRC, Directive.BASE_URI];
+export const DIRECTIVES_CAUSING_XSS: Directive[] = [
+  Directive.SCRIPT_SRC, Directive.SCRIPT_SRC_ATTR, Directive.SCRIPT_SRC_ELEM,
+  Directive.OBJECT_SRC, Directive.BASE_URI
+];
 
 /**
  * A list of URL schemes that can allow XSS vulnerabilities when requests to
@@ -54,20 +56,23 @@ export const URL_SCHEMES_CAUSING_XSS: string[] = ['data:', 'http:', 'https:'];
  *  is present).
  */
 export function checkScriptUnsafeInline(effectiveCsp: Csp): Finding[] {
-  const directiveName =
-      effectiveCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
-  const values: string[] = effectiveCsp.directives[directiveName] || [];
+  const violations: Finding[] = [];
+  const directivesToCheck = effectiveCsp.getEffectiveDirectives([
+    Directive.SCRIPT_SRC, Directive.SCRIPT_SRC_ATTR, Directive.SCRIPT_SRC_ELEM
+  ]);
 
-  // Check if unsafe-inline is present.
-  if (values.includes(Keyword.UNSAFE_INLINE)) {
-    return [new Finding(
-        Type.SCRIPT_UNSAFE_INLINE,
-        `'unsafe-inline' allows the execution of unsafe in-page scripts ` +
-            'and event handlers.',
-        Severity.HIGH, directiveName, Keyword.UNSAFE_INLINE)];
+  for (const directive of directivesToCheck) {
+    const values = effectiveCsp.directives[directive] || [];
+    if (values.includes(Keyword.UNSAFE_INLINE)) {
+      violations.push(new Finding(
+          Type.SCRIPT_UNSAFE_INLINE,
+          `'unsafe-inline' allows the execution of unsafe in-page scripts ` +
+              'and event handlers.',
+          Severity.HIGH, directive, Keyword.UNSAFE_INLINE));
+    }
   }
 
-  return [];
+  return violations;
 }
 
 
@@ -81,19 +86,23 @@ export function checkScriptUnsafeInline(effectiveCsp: Csp): Finding[] {
  * @param parsedCsp Parsed CSP.
  */
 export function checkScriptUnsafeEval(parsedCsp: Csp): Finding[] {
-  const directiveName = parsedCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
-  const values: string[] = parsedCsp.directives[directiveName] || [];
+  const violations: Finding[] = [];
+  const directivesToCheck = parsedCsp.getEffectiveDirectives([
+    Directive.SCRIPT_SRC, Directive.SCRIPT_SRC_ATTR, Directive.SCRIPT_SRC_ELEM
+  ]);
 
-  // Check if unsafe-eval is present.
-  if (values.includes(Keyword.UNSAFE_EVAL)) {
-    return [new Finding(
-        Type.SCRIPT_UNSAFE_EVAL,
-        `'unsafe-eval' allows the execution of code injected into DOM APIs ` +
-            'such as eval().',
-        Severity.MEDIUM_MAYBE, directiveName, Keyword.UNSAFE_EVAL)];
+  for (const directive of directivesToCheck) {
+    const values = parsedCsp.directives[directive] || [];
+    if (values.includes(Keyword.UNSAFE_EVAL)) {
+      violations.push(new Finding(
+          Type.SCRIPT_UNSAFE_EVAL,
+          `'unsafe-eval' allows the execution of code injected into DOM APIs ` +
+              'such as eval().',
+          Severity.MEDIUM_MAYBE, directive, Keyword.UNSAFE_EVAL));
+    }
   }
 
-  return [];
+  return violations;
 }
 
 
@@ -254,75 +263,80 @@ export function checkMissingDirectives(parsedCsp: Csp): Finding[] {
  */
 export function checkScriptAllowlistBypass(parsedCsp: Csp): Finding[] {
   const violations: Finding[] = [];
-  const effectiveScriptSrcDirective =
-      parsedCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
-  const scriptSrcValues =
-      parsedCsp.directives[effectiveScriptSrcDirective] || [];
-  if (scriptSrcValues.includes(Keyword.NONE)) {
-    return violations;
-  }
+  parsedCsp
+      .getEffectiveDirectives([Directive.SCRIPT_SRC, Directive.SCRIPT_SRC_ELEM])
+      .forEach(effectiveScriptSrcDirective => {
+        const scriptSrcValues =
+            parsedCsp.directives[effectiveScriptSrcDirective] || [];
+        if (scriptSrcValues.includes(Keyword.NONE)) {
+          return;
+        }
 
-  for (const value of scriptSrcValues) {
-    if (value === Keyword.SELF) {
-      violations.push(new Finding(
-          Type.SCRIPT_ALLOWLIST_BYPASS,
-          `'self' can be problematic if you host JSONP, AngularJS or user ` +
-              'uploaded files.',
-          Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
-      continue;
-    }
+        for (const value of scriptSrcValues) {
+          if (value === Keyword.SELF) {
+            violations.push(new Finding(
+                Type.SCRIPT_ALLOWLIST_BYPASS,
+                `'self' can be problematic if you host JSONP, AngularJS or user ` +
+                    'uploaded files.',
+                Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
+            continue;
+          }
 
-    // Ignore keywords, nonces and hashes (they start with a single quote).
-    if (value.startsWith('\'')) {
-      continue;
-    }
+          // Ignore keywords, nonces and hashes (they start with a single
+          // quote).
+          if (value.startsWith('\'')) {
+            continue;
+          }
 
-    // Ignore standalone schemes and things that don't look like URLs (no dot).
-    if (csp.isUrlScheme(value) || value.indexOf('.') === -1) {
-      continue;
-    }
+          // Ignore standalone schemes and things that don't look like URLs (no
+          // dot).
+          if (csp.isUrlScheme(value) || value.indexOf('.') === -1) {
+            continue;
+          }
 
-    const url = '//' + utils.getSchemeFreeUrl(value);
+          const url = '//' + utils.getSchemeFreeUrl(value);
 
-    const angularBypass = utils.matchWildcardUrls(url, angular.URLS);
+          const angularBypass = utils.matchWildcardUrls(url, angular.URLS);
 
-    let jsonpBypass = utils.matchWildcardUrls(url, jsonp.URLS);
+          let jsonpBypass = utils.matchWildcardUrls(url, jsonp.URLS);
 
-    // Some JSONP bypasses only work in presence of unsafe-eval.
-    if (jsonpBypass) {
-      const evalRequired = jsonp.NEEDS_EVAL.includes(jsonpBypass.hostname);
-      const evalPresent = scriptSrcValues.includes(Keyword.UNSAFE_EVAL);
-      if (evalRequired && !evalPresent) {
-        jsonpBypass = null;
-      }
-    }
+          // Some JSONP bypasses only work in presence of unsafe-eval.
+          if (jsonpBypass) {
+            const evalRequired =
+                jsonp.NEEDS_EVAL.includes(jsonpBypass.hostname);
+            const evalPresent = scriptSrcValues.includes(Keyword.UNSAFE_EVAL);
+            if (evalRequired && !evalPresent) {
+              jsonpBypass = null;
+            }
+          }
 
-    if (jsonpBypass || angularBypass) {
-      let bypassDomain = '';
-      let bypassTxt = '';
-      if (jsonpBypass) {
-        bypassDomain = jsonpBypass.hostname;
-        bypassTxt = ' JSONP endpoints';
-      }
-      if (angularBypass) {
-        bypassDomain = angularBypass.hostname;
-        bypassTxt += (bypassTxt.trim() === '') ? '' : ' and';
-        bypassTxt += ' Angular libraries';
-      }
+          if (jsonpBypass || angularBypass) {
+            let bypassDomain = '';
+            let bypassTxt = '';
+            if (jsonpBypass) {
+              bypassDomain = jsonpBypass.hostname;
+              bypassTxt = ' JSONP endpoints';
+            }
+            if (angularBypass) {
+              bypassDomain = angularBypass.hostname;
+              bypassTxt += (bypassTxt.trim() === '') ? '' : ' and';
+              bypassTxt += ' Angular libraries';
+            }
 
-      violations.push(new Finding(
-          Type.SCRIPT_ALLOWLIST_BYPASS,
-          bypassDomain + ' is known to host' + bypassTxt +
-              ' which allow to bypass this CSP.',
-          Severity.HIGH, effectiveScriptSrcDirective, value));
-    } else {
-      violations.push(new Finding(
-          Type.SCRIPT_ALLOWLIST_BYPASS,
-          `No bypass found; make sure that this URL doesn't serve JSONP ` +
-              'replies or Angular libraries.',
-          Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
-    }
-  }
+            violations.push(new Finding(
+                Type.SCRIPT_ALLOWLIST_BYPASS,
+                bypassDomain + ' is known to host' + bypassTxt +
+                    ' which allow to bypass this CSP.',
+                Severity.HIGH, effectiveScriptSrcDirective, value));
+          } else {
+            violations.push(new Finding(
+                Type.SCRIPT_ALLOWLIST_BYPASS,
+                `No bypass found; make sure that this URL doesn't serve JSONP ` +
+                    'replies or Angular libraries.',
+                Severity.MEDIUM_MAYBE, effectiveScriptSrcDirective, value));
+          }
+        }
+      });
 
   return violations;
 }

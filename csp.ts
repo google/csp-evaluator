@@ -77,55 +77,60 @@ export class Csp {
   getEffectiveCsp(cspVersion: Version, optFindings?: Finding[]): Csp {
     const findings = optFindings || [];
     const effectiveCsp = this.clone();
-    const directive = effectiveCsp.getEffectiveDirective(Directive.SCRIPT_SRC);
-    const values = this.directives[directive] || [];
-    const effectiveCspValues = effectiveCsp.directives[directive];
+    [Directive.SCRIPT_SRC, Directive.SCRIPT_SRC_ATTR, Directive.SCRIPT_SRC_ELEM]
+        .forEach(directiveToNormalize => {
+          const directive = effectiveCsp.getEffectiveDirective(
+                                directiveToNormalize) as Directive;
+          const values = this.directives[directive] || [];
+          const effectiveCspValues = effectiveCsp.directives[directive];
 
-    if (effectiveCspValues &&
-        (effectiveCsp.policyHasScriptNonces() ||
-         effectiveCsp.policyHasScriptHashes())) {
-      if (cspVersion >= Version.CSP2) {
-        // Ignore 'unsafe-inline' in CSP >= v2, if a nonce or a hash is present.
-        if (values.includes(Keyword.UNSAFE_INLINE)) {
-          arrayRemove(effectiveCspValues, Keyword.UNSAFE_INLINE);
-          findings.push(new Finding(
-              Type.IGNORED,
-              'unsafe-inline is ignored if a nonce or a hash is present. ' +
-                  '(CSP2 and above)',
-              Severity.NONE, directive, Keyword.UNSAFE_INLINE));
-        }
-      } else {
-        // remove nonces and hashes (not supported in CSP < v2).
-        for (const value of values) {
-          if (value.startsWith('\'nonce-') || value.startsWith('\'sha')) {
-            arrayRemove(effectiveCspValues, value);
+          if (effectiveCspValues &&
+              (effectiveCsp.policyHasScriptNonces(directive) ||
+               effectiveCsp.policyHasScriptHashes(directive))) {
+            if (cspVersion >= Version.CSP2) {
+              // Ignore 'unsafe-inline' in CSP >= v2, if a nonce or a hash is
+              // present.
+              if (values.includes(Keyword.UNSAFE_INLINE)) {
+                arrayRemove(effectiveCspValues, Keyword.UNSAFE_INLINE);
+                findings.push(new Finding(
+                    Type.IGNORED,
+                    'unsafe-inline is ignored if a nonce or a hash is present. ' +
+                        '(CSP2 and above)',
+                    Severity.NONE, directive, Keyword.UNSAFE_INLINE));
+              }
+            } else {
+              // remove nonces and hashes (not supported in CSP < v2).
+              for (const value of values) {
+                if (value.startsWith('\'nonce-') || value.startsWith('\'sha')) {
+                  arrayRemove(effectiveCspValues, value);
+                }
+              }
+            }
           }
-        }
-      }
-    }
 
-    if (effectiveCspValues && this.policyHasStrictDynamic()) {
-      // Ignore allowlist in CSP >= v3 in presence of 'strict-dynamic'.
-      if (cspVersion >= Version.CSP3) {
-        for (const value of values) {
-          // Because of 'strict-dynamic' all host-source and scheme-source
-          // expressions, as well as the "'unsafe-inline'" and "'self'
-          // keyword-sources will be ignored.
-          // https://w3c.github.io/webappsec-csp/#strict-dynamic-usage
-          if (!value.startsWith('\'') || value === Keyword.SELF ||
-              value === Keyword.UNSAFE_INLINE) {
-            arrayRemove(effectiveCspValues, value);
-            findings.push(new Finding(
-                Type.IGNORED,
-                'Because of strict-dynamic this entry is ignored in CSP3 and above',
-                Severity.NONE, directive, value));
+          if (effectiveCspValues && this.policyHasStrictDynamic(directive)) {
+            // Ignore allowlist in CSP >= v3 in presence of 'strict-dynamic'.
+            if (cspVersion >= Version.CSP3) {
+              for (const value of values) {
+                // Because of 'strict-dynamic' all host-source and scheme-source
+                // expressions, as well as the "'unsafe-inline'" and "'self'
+                // keyword-sources will be ignored.
+                // https://w3c.github.io/webappsec-csp/#strict-dynamic-usage
+                if (!value.startsWith('\'') || value === Keyword.SELF ||
+                    value === Keyword.UNSAFE_INLINE) {
+                  arrayRemove(effectiveCspValues, value);
+                  findings.push(new Finding(
+                      Type.IGNORED,
+                      'Because of strict-dynamic this entry is ignored in CSP3 and above',
+                      Severity.NONE, directive, value));
+                }
+              }
+            } else {
+              // strict-dynamic not supported.
+              arrayRemove(effectiveCspValues, Keyword.STRICT_DYNAMIC);
+            }
           }
-        }
-      } else {
-        // strict-dynamic not supported.
-        arrayRemove(effectiveCspValues, Keyword.STRICT_DYNAMIC);
-      }
-    }
+        });
 
     if (cspVersion < Version.CSP3) {
       // Remove CSP3 directives from pre-CSP3 policies.
@@ -135,6 +140,10 @@ export class Csp {
       delete effectiveCsp.directives[Directive.MANIFEST_SRC];
       delete effectiveCsp.directives[Directive.TRUSTED_TYPES];
       delete effectiveCsp.directives[Directive.REQUIRE_TRUSTED_TYPES_FOR];
+      delete effectiveCsp.directives[Directive.SCRIPT_SRC_ATTR];
+      delete effectiveCsp.directives[Directive.SCRIPT_SRC_ELEM];
+      delete effectiveCsp.directives[Directive.STYLE_SRC_ATTR];
+      delete effectiveCsp.directives[Directive.STYLE_SRC_ELEM];
     }
 
     return effectiveCsp;
@@ -147,12 +156,25 @@ export class Csp {
    * @return The effective directive.
    */
   getEffectiveDirective(directive: string): string {
-    // Only fetch directives default to default-src.
-    if (!(directive in this.directives) &&
-        FETCH_DIRECTIVES.includes(directive as Directive)) {
-      return Directive.DEFAULT_SRC;
+    if (directive in this.directives) {
+      return directive;
     }
 
+    if ((directive === Directive.SCRIPT_SRC_ATTR ||
+         directive === Directive.SCRIPT_SRC_ELEM) &&
+        Directive.SCRIPT_SRC in this.directives) {
+      return Directive.SCRIPT_SRC;
+    }
+    if ((directive === Directive.STYLE_SRC_ATTR ||
+         directive === Directive.STYLE_SRC_ELEM) &&
+        Directive.STYLE_SRC in this.directives) {
+      return Directive.STYLE_SRC;
+    }
+
+    // Only fetch directives default to default-src.
+    if (FETCH_DIRECTIVES.includes(directive as Directive)) {
+      return Directive.DEFAULT_SRC;
+    }
     return directive;
   }
 
@@ -172,8 +194,9 @@ export class Csp {
    * Checks if this CSP is using nonces for scripts.
    * @return true, if this CSP is using script nonces.
    */
-  policyHasScriptNonces(): boolean {
-    const directiveName = this.getEffectiveDirective(Directive.SCRIPT_SRC);
+  policyHasScriptNonces(directive?: Directive): boolean {
+    const directiveName =
+        this.getEffectiveDirective(directive || Directive.SCRIPT_SRC);
     const values = this.directives[directiveName] || [];
     return values.some((val) => isNonce(val));
   }
@@ -182,8 +205,9 @@ export class Csp {
    * Checks if this CSP is using hashes for scripts.
    * @return true, if this CSP is using script hashes.
    */
-  policyHasScriptHashes(): boolean {
-    const directiveName = this.getEffectiveDirective(Directive.SCRIPT_SRC);
+  policyHasScriptHashes(directive?: Directive): boolean {
+    const directiveName =
+        this.getEffectiveDirective(directive || Directive.SCRIPT_SRC);
     const values = this.directives[directiveName] || [];
     return values.some((val) => isHash(val));
   }
@@ -192,8 +216,9 @@ export class Csp {
    * Checks if this CSP is using strict-dynamic.
    * @return true, if this CSP is using CSP nonces.
    */
-  policyHasStrictDynamic(): boolean {
-    const directiveName = this.getEffectiveDirective(Directive.SCRIPT_SRC);
+  policyHasStrictDynamic(directive?: Directive): boolean {
+    const directiveName =
+        this.getEffectiveDirective(directive || Directive.SCRIPT_SRC);
     const values = this.directives[directiveName] || [];
     return values.includes(Keyword.STRICT_DYNAMIC);
   }
