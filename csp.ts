@@ -30,18 +30,24 @@ export class Csp {
   directives: Record<string, string[]|undefined> = {};
 
   /**
+   * Creates a CSP object from a list of directives.
+   * @param directives CSP directives.
+   */
+  constructor(directives: Record<string, string[]|undefined> = {}) {
+    for (const [directive, directiveValues] of Object.entries(directives)) {
+      if (directiveValues) {
+        this.directives[directive] = [...directiveValues];
+      }
+    }
+  }
+
+  /**
    * Clones a CSP object.
    * @return clone of parsedCsp.
    */
   clone(): Csp {
-    const clone = new Csp();
-    for (const [directive, directiveValues] of Object.entries(
-             this.directives)) {
-      if (directiveValues) {
-        clone.directives[directive] = [...directiveValues];
-      }
-    }
-    return clone;
+    // Use the constructor that takes in directives to create a deep copy.
+    return new Csp(this.directives);
   }
 
   /**

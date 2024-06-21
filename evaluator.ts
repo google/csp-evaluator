@@ -44,7 +44,7 @@ export class CspEvaluator {
    * @param parsedCsp A parsed Content Security Policy.
    * @param cspVersion CSP version to apply checks for.
    */
-  constructor(parsedCsp: Csp, cspVersion?: Version) {
+  constructor(parsedCsp: Csp, cspVersion?: Version, findings?: Finding[]) {
     /**
      * CSP version.
      */
@@ -54,6 +54,11 @@ export class CspEvaluator {
      * Parsed CSP.
      */
     this.csp = parsedCsp;
+
+    /**
+     * List of findings reported by checks.
+     */
+    this.findings = findings || [];
   }
 
   /**
@@ -84,7 +89,7 @@ export class CspEvaluator {
       }
     }
 
-    // Checks depenent on CSP version.
+    // Checks dependent on CSP version.
     for (const check of checks) {
       this.findings = this.findings.concat(check(effectiveCsp));
     }
