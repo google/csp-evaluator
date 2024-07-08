@@ -86,7 +86,7 @@ export enum Type {
   INVALID_KEYWORD,
   NONCE_CHARSET = 106,
 
-  // Security cheks
+  // Security checks
   MISSING_DIRECTIVES = 300,
   SCRIPT_UNSAFE_INLINE,
   SCRIPT_UNSAFE_EVAL,
@@ -104,6 +104,7 @@ export enum Type {
   X_FRAME_OPTIONS_OBSOLETED,
   STYLE_UNSAFE_INLINE,
   STATIC_NONCE,
+  SCRIPT_UNSAFE_HASHES,
 
   // Strict dynamic and backward compatibility checks
   STRICT_DYNAMIC = 400,

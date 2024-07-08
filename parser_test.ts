@@ -26,8 +26,8 @@ describe('Test parser', () => {
   it('CspParser', () => {
     const validCsp =  // Test policy with different features from CSP2.
         'default-src \'none\';' +
-        'script-src \'nonce-unsafefoobar\' \'unsafe-eval\'   \'unsafe-inline\' \n' +
-        'https://example.com/foo.js foo.bar;      ' +
+        'script-src \'nonce-unsafefoobar\' \'unsafe-eval\' \'unsafe-hashes\'  \'unsafe-inline\' \n' +
+        'https://example.com/foo.js foo.bar     \'sha256-1DCfk1NYWuHMfoobarfoobar=\';' +
         'script-src-elem \'self\' \'unsafe-inline\' https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com https://wchat.freshchat.com;' +
         'object-src \'none\';' +
         'img-src \'self\' https: data: blob:;' +
@@ -57,8 +57,9 @@ describe('Test parser', () => {
             parsedCsp.directives['default-src'] as string[]));
 
     expect([
-      '\'nonce-unsafefoobar\'', '\'unsafe-eval\'', '\'unsafe-inline\'',
-      'https://example.com/foo.js', 'foo.bar'
+      '\'nonce-unsafefoobar\'', '\'unsafe-eval\'', '\'unsafe-hashes\'',
+      '\'unsafe-inline\'', 'https://example.com/foo.js', 'foo.bar',
+      '\'sha256-1DCfk1NYWuHMfoobarfoobar=\''
     ])
         .toEqual(jasmine.arrayWithExactContents(
             parsedCsp.directives['script-src'] as string[]));

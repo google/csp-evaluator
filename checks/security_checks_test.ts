@@ -54,6 +54,15 @@ describe('Test security checks', () => {
     expect(violations.length).toBe(1);
   });
 
+  it('CheckScriptUnsafeHashesInScriptSrc', () => {
+    const test =
+        'script-src \'unsafe-hashes\' \'sha256-1DCfk1NYWuHMfoobarfoobar=\'';
+
+    const violations = checkCsp(test, securityChecks.checkScriptUnsafeInline);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.MEDIUM_MAYBE);
+  });
+
   it('CheckScriptUnsafeInlineInDefaultSrcAndNotInScriptSrc', () => {
     const test =
         'default-src \'unsafe-inline\'; script-src https:; script-src-attr https:; script-src-elem https:';

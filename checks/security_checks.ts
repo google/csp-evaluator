@@ -70,6 +70,12 @@ export function checkScriptUnsafeInline(effectiveCsp: Csp): Finding[] {
               'and event handlers.',
           Severity.HIGH, directive, Keyword.UNSAFE_INLINE));
     }
+    if (values.includes(Keyword.UNSAFE_HASHES)) {
+      violations.push(new Finding(
+          Type.SCRIPT_UNSAFE_HASHES,
+          `'unsafe-hashes', while safer than 'unsafe-inline', allows the execution of unsafe in-page scripts and event handlers as long as their hashes appear in the CSP. Please refactor them to no longer use inline scripts if possible.`,
+          Severity.MEDIUM_MAYBE, directive, Keyword.UNSAFE_HASHES));
+    }
   }
 
   return violations;
