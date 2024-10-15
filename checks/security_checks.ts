@@ -497,6 +497,15 @@ export function checkDeprecatedDirective(parsedCsp: Csp): Finding[] {
             'Please, use the Cross Origin Opener Policy header instead.',
         Severity.INFO, Directive.DISOWN_OPENER));
   }
+  
+  // More details: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/prefetch-src
+  if (Directive.PREFETCH_SRC in parsedCsp.directives) {
+    violations.push(new Finding(
+        Type.DEPRECATED_DIRECTIVE,
+        'prefetch-src is deprecated since CSP3. ' +
+            'Be aware that this feature may cease to work at any time.',
+        Severity.INFO, Directive.PREFETCH_SRC));
+  }
   return violations;
 }
 
