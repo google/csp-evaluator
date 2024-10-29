@@ -413,6 +413,14 @@ describe('Test security checks', () => {
     expect(violations.length).toBe(1);
     expect(violations[0].severity).toBe(Severity.INFO);
   });
+  
+  it('CheckDeprecatedDirectivePrefetchSrc', () => {
+    const test = 'prefetch-src test';
+
+    const violations = checkCsp(test, securityChecks.checkDeprecatedDirective);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.INFO);
+  });
 
   /** Tests for csp.securityChecks.checkNonceLength */
   it('CheckNonceLengthWithLongNonce', () => {
