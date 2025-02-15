@@ -247,6 +247,7 @@ export enum Keyword {
   REPORT_SAMPLE = '\'report-sample\'',
   BLOCK = '\'block\'',
   ALLOW = '\'allow\'',
+  INLINE_SPECULATION_RULES = '\'inline-speculation-rules\'',
 }
 
 
