@@ -108,7 +108,6 @@ export const URLS: string[] = [
   '//wslocker.ru/client/user.chk.php',
   '//community.adobe.com/CommunityPod/getJSON',
   '//maps.google.lv/maps/vt',
-  '//dev.virtualearth.net/REST/V1/Imagery/Metadata/AerialWithLabels/26.318581',
   '//awaps.yandex.ru/10/8938/02400400.',
   '//a248.e.akamai.net/h5.hulu.com/h5.mp4',
   '//nominatim.openstreetmap.org/',
