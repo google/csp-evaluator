@@ -165,5 +165,10 @@ export const URLS: string[] = [
   '//maps.google.ru/maps/vt',
   '//c1n2.hypercomments.com/stream/subscribe',
   '//rec.ydf.yandex.ru/cookie',
-  '//cdn.jsdelivr.net'
+  '//cdn.jsdelivr.net',
+  '//dynamic.xkcd.com/api-0/jsonp/comic/538',
+  '//gist.github.com/Ry0taK/f1ffd2bca07e2bcdf1cb834529712522.json',
+  '//meta.wikimedia.org/w/api.php?action=sitematrix&format=json',
+  '//www.flickr.com/services/oembed.json',
+  '//api.pinterest.com/v3/pidgets/pins/info/'
 ];
