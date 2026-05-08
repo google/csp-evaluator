@@ -86,6 +86,28 @@ describe('Test security checks', () => {
     expect(violations.length).toBe(0);
   });
 
+  it('CheckScriptUnsafeInlineWithMalformedNonce', () => {
+    const test =
+        'script-src \'unsafe-inline\' \'nonce-invalid$\';';
+    const parsedCsp = (new CspParser(test)).csp;
+
+    const effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP3);
+    const violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.HIGH);
+  });
+
+  it('CheckScriptUnsafeInlineWithMalformedHash', () => {
+    const test =
+        'script-src \'unsafe-inline\' \'sha256-invalid$\';';
+    const parsedCsp = (new CspParser(test)).csp;
+
+    const effectiveCsp = parsedCsp.getEffectiveCsp(Version.CSP3);
+    const violations = securityChecks.checkScriptUnsafeInline(effectiveCsp);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.HIGH);
+  });
+
   /** Tests for csp.securityChecks.checkScriptUnsafeEval */
   it('CheckScriptUnsafeEvalInScriptSrc', () => {
     const test =
