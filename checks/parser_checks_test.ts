@@ -78,6 +78,24 @@ describe('Test parser checks', () => {
     expect(violations[0].value).toBe('\'foo-bar\'');
   });
 
+  it('CheckInvalidKeywordMalformedNonce', () => {
+    const test = 'script-src \'nonce-invalid$\'';
+
+    const violations = checkCsp(test, parserChecks.checkInvalidKeyword);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.SYNTAX);
+    expect(violations[0].value).toBe('\'nonce-invalid$\'');
+  });
+
+  it('CheckInvalidKeywordMalformedHash', () => {
+    const test = 'script-src \'sha256-invalid$\'';
+
+    const violations = checkCsp(test, parserChecks.checkInvalidKeyword);
+    expect(violations.length).toBe(1);
+    expect(violations[0].severity).toBe(Severity.SYNTAX);
+    expect(violations[0].value).toBe('\'sha256-invalid$\'');
+  });
+
   it('CheckInvalidKeywordAllowsRequireTrustedTypesForScript', () => {
     const test = 'require-trusted-types-for \'script\'';
 

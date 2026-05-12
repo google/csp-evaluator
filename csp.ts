@@ -204,7 +204,7 @@ export class Csp {
     const directiveName =
         this.getEffectiveDirective(directive || Directive.SCRIPT_SRC);
     const values = this.directives[directiveName] || [];
-    return values.some((val) => isNonce(val));
+    return values.some((val) => isNonce(val, true));
   }
 
   /**
@@ -215,7 +215,7 @@ export class Csp {
     const directiveName =
         this.getEffectiveDirective(directive || Directive.SCRIPT_SRC);
     const values = this.directives[directiveName] || [];
-    return values.some((val) => isHash(val));
+    return values.some((val) => isHash(val, true));
   }
 
   /**
@@ -400,7 +400,7 @@ export function isNonce(nonce: string, strictCheck?: boolean): boolean {
  * A regex pattern to check hash prefix and Base64 formatting of a hash value.
  */
 export const STRICT_HASH_PATTERN =
-    new RegExp('^\'(sha256|sha384|sha512)-[a-zA-Z0-9+/]+[=]{0,2}\'$');
+    new RegExp('^\'(sha256|sha384|sha512)-[a-zA-Z0-9+/_-]+[=]{0,2}\'$');
 
 
 /** A regex pattern to check hash prefix. */

@@ -295,7 +295,7 @@ describe('Test Csp', () => {
     expect(isHash('\'sha256-asdfASDF=\'', true)).toBeTrue();
     expect(isHash('\'sha256-as+d/f/ASD0+4F==\'', true)).toBeTrue();
     expect(isHash('\'sha256-asdfASDF===\'', true)).toBeFalse();
-    expect(isHash('\'sha256-asd_fASDF=\'', true)).toBeFalse();
+    expect(isHash('\'sha256-asd_fASDF=\'', true)).toBeTrue();
     expect(isHash('\'sha777-asdfASDF=\'', true)).toBeFalse();
     expect(isHash('\'asdfASDF=\'', true)).toBeFalse();
     expect(isHash('example.com', true)).toBeFalse();

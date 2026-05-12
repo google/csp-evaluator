@@ -140,7 +140,7 @@ export function checkInvalidKeyword(parsedCsp: Csp): Finding[] {
         }
       } else {
         // Continue, if it's a valid keyword.
-        if (csp.isKeyword(value) || csp.isHash(value) || csp.isNonce(value)) {
+        if (csp.isKeyword(value) || csp.isHash(value, true) || csp.isNonce(value, true)) {
           continue;
         }
       }
